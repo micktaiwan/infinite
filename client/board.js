@@ -34,6 +34,7 @@ export class Board {
     this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), false);
     this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), false);
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
+    document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     this.redrawCanvas();
 
     const self = this;
@@ -44,6 +45,21 @@ export class Board {
 
   }
 
+  onKeyUp(event) {
+    if (event.keyCode === 27)  this.clear();
+    else if (event.keyCode === 'U'.charCodeAt()) this.undo();
+  }
+
+  clear() {
+    this.drawings = [];
+    this.redrawCanvas();
+  }
+
+  undo() {
+    this.drawings.pop();
+    this.redrawCanvas();
+  }
+  
   onMouseDown(event) {
     // console.log('down');
     // console.log(event);
