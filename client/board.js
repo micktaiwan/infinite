@@ -140,7 +140,7 @@ export class Board {
         y1: scaledY
       })
       // draw a line
-      this.drawLine(this.pressure, this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY);
+      this.drawLine(this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY, this.pressure);
       // console.log('move',cursorX, cursorY);
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
@@ -185,12 +185,12 @@ export class Board {
     this.redrawCanvas();
   }
 
-  drawLine(pressure, x0, y0, x1, y1) {
+  drawLine(x0, y0, x1, y1, lineWidth) {
     this.ctx.beginPath();
     this.ctx.moveTo(x0, y0);
     this.ctx.lineTo(x1, y1);
     this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = pressure;
+    this.ctx.lineWidth = lineWidth;
     this.ctx.stroke();
   }
 
@@ -226,7 +226,7 @@ export class Board {
     for (let i = 0; i < this.drawings.length; i++) {
       const line = this.drawings[i];
       if (this.scale / line.scale > 0.005)
-        this.drawLine(line.pressure, this.toScreenX(line.x0), this.toScreenY(line.y0), this.toScreenX(line.x1), this.toScreenY(line.y1));
+        this.drawLine(this.toScreenX(line.x0), this.toScreenY(line.y0), this.toScreenX(line.x1), this.toScreenY(line.y1), (this.scale / line.scale) * line.pressure);
       else
         skipped++;
     }
