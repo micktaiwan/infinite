@@ -35,6 +35,7 @@ export class Board {
     this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), false);
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
     document.addEventListener('keyup', this.onKeyUp.bind(this), false);
+    document.addEventListener('keydown', this.onKeyDown.bind(this), false);
     this.redrawCanvas();
 
     const self = this;
@@ -45,9 +46,22 @@ export class Board {
 
   }
 
+  onKeyDown(event) {
+    if (event.keyCode === ' '.charCodeAt())  this.startPan();
+  }
+
   onKeyUp(event) {
     if (event.keyCode === 27)  this.clear();
     else if (event.keyCode === 'U'.charCodeAt()) this.undo();
+    else if (event.keyCode === ' '.charCodeAt()) this.stopPan();
+  }
+
+  startPan() {
+    this.panning = true;
+  }
+
+  stopPan(event) {
+    this.panning = false;
   }
 
   clear() {
@@ -87,6 +101,12 @@ export class Board {
   }
 
   onMouseMove(event) {
+
+    if(this.panning) {
+      this.offsetX += event.movementX / this.scale;
+      this.offsetY += event.movementY / this.scale;
+      this.redrawCanvas();
+    }
 
     // get mouse position
     this.cursorX = event.pageX;
