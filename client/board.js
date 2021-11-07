@@ -47,13 +47,14 @@ export class Board {
   }
 
   onKeyDown(event) {
-    if (event.keyCode === ' '.charCodeAt())  this.startPan();
+    if (event.keyCode === ' '.charCodeAt()) this.startPan();
   }
 
   onKeyUp(event) {
-    if (event.keyCode === 27)  this.clear();
+    if (event.keyCode === 27) this.clear();
     else if (event.keyCode === 'U'.charCodeAt()) this.undo();
     else if (event.keyCode === ' '.charCodeAt()) this.stopPan();
+    else if (event.keyCode === '+'.charCodeAt()) this.zoomStep(1.2);
   }
 
   startPan() {
@@ -73,7 +74,7 @@ export class Board {
     this.drawings.pop();
     this.redrawCanvas();
   }
-  
+
   onMouseDown(event) {
     // console.log('down');
     // console.log(event);
@@ -86,6 +87,7 @@ export class Board {
     if (event.button == 2) {
       this.rightMouseDown = true;
       this.leftMouseDown = false;
+      this.panning = true;
     }
 
     // update the cursor coordinates
@@ -102,15 +104,19 @@ export class Board {
 
   onMouseMove(event) {
 
-    if(this.panning) {
-      this.offsetX += event.movementX / this.scale;
-      this.offsetY += event.movementY / this.scale;
-      this.redrawCanvas();
-    }
-
     // get mouse position
     this.cursorX = event.pageX;
     this.cursorY = event.pageY;
+
+    if (this.panning) {
+      this.offsetX += event.movementX / this.scale;
+      this.offsetY += event.movementY / this.scale;
+      this.redrawCanvas();
+      this.prevCursorX = this.cursorX;
+      this.prevCursorY = this.cursorY;
+      return;
+    }
+
     const scaledX = this.toTrueX(this.cursorX);
     const scaledY = this.toTrueY(this.cursorY);
     const prevScaledX = this.toTrueX(this.prevCursorX);
@@ -139,33 +145,30 @@ export class Board {
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
     }
-    if (this.rightMouseDown) {
-      // move the screen
-      this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
-      this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
-      this.redrawCanvas();
-      this.prevCursorX = this.cursorX;
-      this.prevCursorY = this.cursorY;
-    }
   }
 
   onMouseUp() {
     // console.log('up');
     this.leftMouseDown = false;
     this.rightMouseDown = false;
+    this.panning = false;
   }
 
   onMouseWheel(event) {
     this.zoom(event);
   }
 
+  zoomStep(step) {
+    console.log(step);
+    this.scale *= step;
+    this.redrawCanvas();
+  }
+
   zoom(event) {
     const deltaY = event.deltaY;
     const scaleAmount = -deltaY / 500;
     this.scale = this.scale * (1 + scaleAmount);
-    // console.log(this.scale);
 
-    // zoom the page based on where the cursor is
     var distX = event.pageX / canvas.clientWidth;
     var distY = event.pageY / canvas.clientHeight;
 
@@ -229,6 +232,5 @@ export class Board {
     }
     // console.log(skipped);
   }
-
 
 };
