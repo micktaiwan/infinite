@@ -265,10 +265,21 @@ export class Board {
           this.toScreenX(line.x1),
           this.toScreenY(line.y1),
           this.scale / line.scale > 1
-            ? line.pressure
-            : (line.pressure * this.scale) / line.scale,
+            ? line.pressure * Math.min(this.scale / line.scale, 2)
+            : line.pressure * (this.scale / line.scale),
           line.color
         );
     }
+
+    this.infos();
+  }
+
+  infos() {
+    this.ctx.font = 'Calibri';
+    this.ctx.fillStyle = '#999';
+    this.ctx.fillText('Scale', 10, 10);
+    this.ctx.fillText(this.scale, 90, 10);
+    this.ctx.fillText('Points', 10, 25);
+    this.ctx.fillText(this.drawings.length, 90, 25);
   }
 }
