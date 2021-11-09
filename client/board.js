@@ -108,9 +108,11 @@ export class Board {
     this.cursorX = event.pageX;
     this.cursorY = event.pageY;
 
-    if (this.panning) {
-      this.offsetX += event.movementX / this.scale;
-      this.offsetY += event.movementY / this.scale;
+    const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
+
+    if (this.panning && dist > 2) {
+      this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
+      this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
       this.redrawCanvas();
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
@@ -124,8 +126,6 @@ export class Board {
 
     this.pressure = event.pressure * 5;
     // console.log(this.pressure);
-
-    const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
 
     if (this.leftMouseDown && dist > 2) {
       // console.log(event.tiltX, event.tiltY, event.twist, event.azimuthAngle);
@@ -222,13 +222,14 @@ export class Board {
     // console.log('redraw');
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    let skipped = 0;
+    // let skipped = 0;
     for (let i = 0; i < this.drawings.length; i++) {
       const line = this.drawings[i];
-      if (this.scale / line.scale > 0.005)
+      const p = this.scale / line.scale;
+      if (p > 0.005 && p < 400)
         this.drawLine(this.toScreenX(line.x0), this.toScreenY(line.y0), this.toScreenX(line.x1), this.toScreenY(line.y1), (this.scale / line.scale) * line.pressure);
-      else
-        skipped++;
+      // else
+      //  skipped++;
     }
     // console.log(skipped);
   }
