@@ -56,32 +56,58 @@ export class Board {
   }
 
   onKeyDown(event) {
+    if(event.repeat) return;
     // console.log('down', event);
-    if (event.key === ' ') this.startPan();
-    else if (event.key === 'z' && event.metaKey) this.undo();
+    if (event.key === 'z' && event.metaKey) this.undo();
+    else if (event.key === 'z') this.startPan(event);
+    else if (event.key === 'a') this.startZooming();
+    else if (event.key === 'e') this.reset();
+    return false;
   }
 
   onKeyUp(event) {
+    if(event.repeat) return;
     // console.log('up', event);
     if (event.keyCode === 27) this.clear();
-    else if (event.key === ' ') this.stopPan();
+    else if (event.key === 'z') this.stopPan(event);
     else if (event.key === '+') this.zoomStep(1.2);
+    else if (event.key === 'a') this.stopZooming();
+    return false;
   }
 
-  startPan() {
+  startPan(event) {
+    this.updateCursorPos(event);
     this.panning = true;
   }
 
   stopPan(event) {
     this.panning = false;
+    this.updateCursorPos(event);
+    this.redrawCanvas();
   }
 
-  clear() {
-    this.drawings = [];
+  startZooming() {
+    this.zooming = true;
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
+  }
+
+  stopZooming() {
+    this.zooming = false;
+  }
+
+  reset() {
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
     this.redrawCanvas();
+  }
+
+  clear() {
+    this.drawings = [];
+    this.reset();
   }
 
   undo() {
@@ -89,9 +115,17 @@ export class Board {
     this.redrawCanvas();
   }
 
+  updateCursorPos(event) {
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
+    this.cursorX = event.pageX;
+    this.cursorY = event.pageY;
+  }
+
   onMouseDown(event) {
-    // console.log('down');
-    // console.log(event);
+    // update the cursor coordinates
+    this.updateCursorPos(event);
+
     // detect left clicks
     if (event.button == 0) {
       this.leftMouseDown = true;
@@ -103,22 +137,15 @@ export class Board {
       this.rightMouseDown = true;
       this.leftMouseDown = false;
       this.type = 3;
-      this.panning = true;
+      this.startPan(event)
     }
-
-    // update the cursor coordinates
-    this.cursorX = event.pageX;
-    this.cursorY = event.pageY;
-    this.prevCursorX = event.pageX;
-    this.prevCursorY = event.pageY;
-    // console.log('down',cursorX, cursorY);
   }
 
-  onMouseUp(e) {
+  onMouseUp(event) {
     this.leftMouseDown = false;
     this.rightMouseDown = false;
-    this.panning = false;
     this.type = 2;
+    this.stopPan(event);
   }
 
   dist(x1, y1, x2, y2) {
@@ -130,12 +157,26 @@ export class Board {
     this.cursorX = event.pageX;
     this.cursorY = event.pageY;
 
+    const scaledX = this.toTrueX(this.cursorX);
+    const scaledY = this.toTrueY(this.cursorY);
+    const prevScaledX = this.toTrueX(this.prevCursorX);
+    const prevScaledY = this.toTrueY(this.prevCursorY);
+
+    this.pressure = event.pressure * 5;
+
     const dist = this.dist(
       this.cursorX,
       this.cursorY,
       this.prevCursorX,
       this.prevCursorY
     );
+
+    if(this.zooming && dist > 2) {
+      this.mouseZoom(event);
+      this.prevCursorX = this.cursorX;
+      this.prevCursorY = this.cursorY;
+      return;
+    }
 
     if (this.panning && dist > 2) {
       this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
@@ -146,12 +187,6 @@ export class Board {
       return;
     }
 
-    const scaledX = this.toTrueX(this.cursorX);
-    const scaledY = this.toTrueY(this.cursorY);
-    const prevScaledX = this.toTrueX(this.prevCursorX);
-    const prevScaledY = this.toTrueY(this.prevCursorY);
-
-    this.pressure = event.pressure * 5;
     // console.log(this.pressure);
 
     if (this.leftMouseDown && dist > 2) {
@@ -192,6 +227,29 @@ export class Board {
   zoomStep(step) {
     console.log(step);
     this.scale *= step;
+    this.redrawCanvas();
+  }
+
+  mouseZoom() {
+    const reverse = Math.sign(this.prevCursorY - this.cursorY);
+    const deltaX = Math.abs(this.startX - this.cursorX);
+    const deltaY = Math.abs(this.startY - this.cursorY);
+    const scaleAmount = reverse * deltaY / 5000;
+    this.scale = this.scale * (1 + scaleAmount);
+
+    var distX = this.startX / canvas.clientWidth;
+    var distY = this.startY / canvas.clientHeight;
+
+    // calculate how much we need to zoom
+    const unitsZoomedX = this.trueWidth() * scaleAmount;
+    const unitsZoomedY = this.trueHeight() * scaleAmount;
+
+    const unitsAddLeft = unitsZoomedX * distX;
+    const unitsAddTop = unitsZoomedY * distY;
+
+    this.offsetX -= unitsAddLeft;
+    this.offsetY -= unitsAddTop;
+
     this.redrawCanvas();
   }
 
@@ -254,7 +312,7 @@ export class Board {
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let i = 0; i < this.drawings.length; i++) {
+    for (let i = 0; i < this.drawings.length; i+=this.panning ? 2 : 1) {
       const line = this.drawings[i];
       const p = this.scale / line.scale;
 
