@@ -142,6 +142,7 @@ export default class Board {
 
   onMouseUp(event) {
     if (this.lines.length) this.drawings.push(this.lines);
+    this.lines = [];
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
@@ -183,6 +184,8 @@ export default class Board {
     }
 
     // console.log(this.pressure);
+
+    // if (event.pressure < 0.1) return;
 
     if (this.leftMouseDown && dist > 2) {
       const color = '#000';
@@ -303,21 +306,19 @@ export default class Board {
 
     for (let i = 0; i < this.drawings.length; i++) {
       const segment = this.drawings[i];
-
       for (let j = 0; j < segment.length; j += (this.panning || this.zooming) ? 3 : 1) {
         const line = segment[j];
-
-        const p = this.scale / line.scale;
-
-        if (p > 0.005 && p < 400) {
+        const ratio = this.scale / line.scale;
+        if (ratio > 0.005 && ratio < 400) {
           this.drawLine(
             this.toScreenX(line.x0),
             this.toScreenY(line.y0),
             this.toScreenX(line.x1),
             this.toScreenY(line.y1),
-            this.scale / line.scale > 1 ?
-              line.pressure * Math.min(this.scale / line.scale, 2) :
-              line.pressure * (this.scale / line.scale),
+            // this.scale / line.scale > 1 ?
+            //   line.pressure * Math.min(this.scale / line.scale, 2) :
+            //   line.pressure * (this.scale / line.scale),
+            line.pressure * ratio,
             line.color,
           );
         }
