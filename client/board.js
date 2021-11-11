@@ -1,18 +1,17 @@
-export class Board {
+export default class Board {
   constructor() {
     this.drawings = [];
+    this.lines = [];
     this.pressure = 2;
 
     // disable right clicking
-    document.oncontextmenu = () => {
-      return false;
-    };
+    document.oncontextmenu = () => false;
 
     // coordinates of our cursor
-    this.cursorX;
-    this.cursorY;
-    this.prevCursorX;
-    this.prevCursorY;
+    this.cursorX = 0;
+    this.cursorY = 0;
+    this.prevCursorX = 0;
+    this.prevCursorY = 0;
 
     // distance from origin
     this.offsetX = 0;
@@ -30,18 +29,18 @@ export class Board {
     this.canvas.addEventListener(
       'pointerdown',
       this.onMouseDown.bind(this),
-      false
+      false,
     );
     this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), false);
     this.canvas.addEventListener(
       'pointerout',
       this.onMouseUp.bind(this),
-      false
+      false,
     );
     this.canvas.addEventListener(
       'pointermove',
       this.onMouseMove.bind(this),
-      false
+      false,
     );
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
     document.addEventListener('keyup', this.onKeyUp.bind(this), false);
@@ -50,29 +49,27 @@ export class Board {
 
     const self = this;
     // if the window changes size, redraw the canvas
-    window.addEventListener('resize', (event) => {
+    window.addEventListener('resize', () => {
       self.redrawCanvas();
     });
   }
 
   onKeyDown(event) {
-    if(event.repeat) return;
+    if (event.repeat) return;
     // console.log('down', event);
     if (event.key === 'z' && event.metaKey) this.undo();
     else if (event.key === 'z') this.startPan(event);
     else if (event.key === 'a') this.startZooming();
     else if (event.key === 'e') this.reset();
-    return false;
   }
 
   onKeyUp(event) {
-    if(event.repeat) return;
+    if (event.repeat) return;
     // console.log('up', event);
     if (event.keyCode === 27) this.clear();
     else if (event.key === 'z') this.stopPan(event);
     else if (event.key === '+') this.zoomStep(1.2);
     else if (event.key === 'a') this.stopZooming();
-    return false;
   }
 
   startPan(event) {
@@ -96,6 +93,7 @@ export class Board {
 
   stopZooming() {
     this.zooming = false;
+    this.redrawCanvas();
   }
 
   reset() {
@@ -125,31 +123,33 @@ export class Board {
   onMouseDown(event) {
     // update the cursor coordinates
     this.updateCursorPos(event);
+    this.lines = [];
 
     // detect left clicks
-    if (event.button == 0) {
+    if (event.button === 0) {
       this.leftMouseDown = true;
       this.rightMouseDown = false;
       this.type = 0;
     }
     // detect right clicks
-    if (event.button == 2) {
+    if (event.button === 2) {
       this.rightMouseDown = true;
       this.leftMouseDown = false;
       this.type = 3;
-      this.startPan(event)
+      this.startPan(event);
     }
   }
 
   onMouseUp(event) {
+    if (this.lines.length) this.drawings.push(this.lines);
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
     this.stopPan(event);
   }
 
-  dist(x1, y1, x2, y2) {
-    return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+  static dist(x1, y1, x2, y2) {
+    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
   }
 
   onMouseMove(event) {
@@ -164,14 +164,9 @@ export class Board {
 
     this.pressure = event.pressure * 5;
 
-    const dist = this.dist(
-      this.cursorX,
-      this.cursorY,
-      this.prevCursorX,
-      this.prevCursorY
-    );
+    const dist = Board.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
 
-    if(this.zooming && dist > 2) {
+    if (this.zooming && dist > 2) {
       this.mouseZoom(event);
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
@@ -193,7 +188,7 @@ export class Board {
       const color = '#000';
 
       // add the line to our drawing history
-      this.drawings.push({
+      this.lines.push({
         scale: this.scale,
         pressure: this.pressure,
         x0: prevScaledX,
@@ -206,14 +201,8 @@ export class Board {
       this.type = 1;
 
       // draw a line
-      this.drawLine(
-        this.prevCursorX,
-        this.prevCursorY,
-        this.cursorX,
-        this.cursorY,
-        this.pressure,
-        color
-      );
+      this.drawLine(this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY, this.pressure, color);
+
       // console.log('move',cursorX, cursorY);
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
@@ -232,13 +221,13 @@ export class Board {
 
   mouseZoom() {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
-    const deltaX = Math.abs(this.startX - this.cursorX);
+    // const deltaX = Math.abs(this.startX - this.cursorX);
     const deltaY = Math.abs(this.startY - this.cursorY);
     const scaleAmount = reverse * deltaY / 5000;
-    this.scale = this.scale * (1 + scaleAmount);
+    this.scale *= (1 + scaleAmount);
 
-    var distX = this.startX / canvas.clientWidth;
-    var distY = this.startY / canvas.clientHeight;
+    const distX = this.startX / this.canvas.clientWidth;
+    const distY = this.startY / this.canvas.clientHeight;
 
     // calculate how much we need to zoom
     const unitsZoomedX = this.trueWidth() * scaleAmount;
@@ -254,12 +243,12 @@ export class Board {
   }
 
   zoom(event) {
-    const deltaY = event.deltaY;
+    const { deltaY } = event;
     const scaleAmount = -deltaY / 500;
-    this.scale = this.scale * (1 + scaleAmount);
+    this.scale *= (1 + scaleAmount);
 
-    var distX = event.pageX / canvas.clientWidth;
-    var distY = event.pageY / canvas.clientHeight;
+    const distX = event.pageX / this.canvas.clientWidth;
+    const distY = event.pageY / this.canvas.clientHeight;
 
     // calculate how much we need to zoom
     const unitsZoomedX = this.trueWidth() * scaleAmount;
@@ -300,11 +289,11 @@ export class Board {
   }
 
   trueHeight() {
-    return canvas.clientHeight / this.scale;
+    return this.canvas.clientHeight / this.scale;
   }
 
   trueWidth() {
-    return canvas.clientWidth / this.scale;
+    return this.canvas.clientWidth / this.scale;
   }
 
   redrawCanvas() {
@@ -312,21 +301,27 @@ export class Board {
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let i = 0; i < this.drawings.length; i+=this.panning ? 2 : 1) {
-      const line = this.drawings[i];
-      const p = this.scale / line.scale;
+    for (let i = 0; i < this.drawings.length; i++) {
+      const segment = this.drawings[i];
 
-      if (p > 0.005 && p < 400)
-        this.drawLine(
-          this.toScreenX(line.x0),
-          this.toScreenY(line.y0),
-          this.toScreenX(line.x1),
-          this.toScreenY(line.y1),
-          this.scale / line.scale > 1
-            ? line.pressure * Math.min(this.scale / line.scale, 2)
-            : line.pressure * (this.scale / line.scale),
-          line.color
-        );
+      for (let j = 0; j < segment.length; j += (this.panning || this.zooming) ? 3 : 1) {
+        const line = segment[j];
+
+        const p = this.scale / line.scale;
+
+        if (p > 0.005 && p < 400) {
+          this.drawLine(
+            this.toScreenX(line.x0),
+            this.toScreenY(line.y0),
+            this.toScreenX(line.x1),
+            this.toScreenY(line.y1),
+            this.scale / line.scale > 1 ?
+              line.pressure * Math.min(this.scale / line.scale, 2) :
+              line.pressure * (this.scale / line.scale),
+            line.color,
+          );
+        }
+      }
     }
 
     this.infos();
@@ -337,7 +332,7 @@ export class Board {
     this.ctx.fillStyle = '#999';
     this.ctx.fillText('Scale', 10, 10);
     this.ctx.fillText(this.scale, 90, 10);
-    this.ctx.fillText('Points', 10, 25);
+    this.ctx.fillText('Lines', 10, 25);
     this.ctx.fillText(this.drawings.length, 90, 25);
   }
 }

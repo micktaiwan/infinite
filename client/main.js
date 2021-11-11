@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
-import { ReactiveVar } from 'meteor/reactive-var';
-import { Board } from './board.js';
+// import { ReactiveVar } from 'meteor/reactive-var';
+import Board from './board';
 import './main.html';
 
 Template.hello.onRendered(function helloOnCreated() {
@@ -19,6 +19,4 @@ Template.hello.events({
     instance.counter.set(instance.counter.get() + 1);
   },
 
-  
 });
-
