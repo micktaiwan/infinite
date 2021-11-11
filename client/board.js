@@ -1,8 +1,11 @@
+const imageTracer = require('./lib/imagetracer');
+
 export default class Board {
   constructor() {
     this.drawings = [];
     this.lines = [];
     this.pressure = 2;
+    this.eraserSize = 30;
 
     // disable right clicking
     document.oncontextmenu = () => false;
@@ -61,6 +64,7 @@ export default class Board {
     else if (event.key === 'z') this.startPan(event);
     else if (event.key === 'a') this.startZooming();
     else if (event.key === 'e') this.reset();
+    else if (event.key === 'd') this.startEraser();
   }
 
   onKeyUp(event) {
@@ -70,6 +74,7 @@ export default class Board {
     else if (event.key === 'z') this.stopPan(event);
     else if (event.key === '+') this.zoomStep(1.2);
     else if (event.key === 'a') this.stopZooming();
+    else if (event.key === 'd') this.stopEraser(event);
   }
 
   startPan(event) {
@@ -93,6 +98,25 @@ export default class Board {
 
   stopZooming() {
     this.zooming = false;
+    this.redrawCanvas();
+  }
+
+  saveLines() {
+    if (this.lines.length) {
+      this.drawings.push(this.lines);
+      // this.toSVG(this.lines);
+    }
+    this.lines = [];
+  }
+
+  startEraser() {
+    this.saveLines();
+    this.eraser = true;
+  }
+
+  stopEraser(event) {
+    this.eraser = false;
+    this.updateCursorPos(event);
     this.redrawCanvas();
   }
 
@@ -141,16 +165,40 @@ export default class Board {
   }
 
   onMouseUp(event) {
-    if (this.lines.length) this.drawings.push(this.lines);
-    this.lines = [];
+    this.saveLines();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
     this.stopPan(event);
   }
 
-  static dist(x1, y1, x2, y2) {
-    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+  boundingBox() {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i < this.lines.length; i++) {
+      if (this.lines[i].x0 < minX) minX = this.lines[i].x0;
+      if (this.lines[i].y0 < minY) minY = this.lines[i].y0;
+      if (this.lines[i].x1 > maxX) maxX = this.lines[i].x1;
+      if (this.lines[i].y1 > maxY) maxY = this.lines[i].y1;
+    }
+    return { minX, minY, maxX, maxY };
+  }
+
+  toSVG() {
+    const { minX, minY, maxX, maxY } = this.boundingBox();
+    const data = this.ctx.getImageData(minX, minY, maxX - minX, maxY - minY);
+    const svg = imageTracer.imagedataToTracedata(data);
+    console.log(svg);
+    // svg.data.forEach(d => {
+    //   const path = d;
+    //   this.drawings.push(path);
+    // });
+  }
+
+  dist(x1, y1, x2, y2) {
+    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) * this.scale;
   }
 
   onMouseMove(event) {
@@ -165,7 +213,7 @@ export default class Board {
 
     this.pressure = event.pressure * 5;
 
-    const dist = Board.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
+    const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
 
     if (this.zooming && dist > 2) {
       this.mouseZoom(event);
@@ -187,7 +235,29 @@ export default class Board {
 
     // if (event.pressure < 0.1) return;
 
-    if (this.leftMouseDown && dist > 2) {
+    if (this.eraser) {
+      this.drawEraser(this.cursorX, this.cursorY);
+      for (let i = 0; i < this.drawings.length; i++) {
+        const path = this.drawings[i];
+        for (let j = 0; j < path.length; j++) {
+          const line = path[j];
+          if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
+            this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
+            path.splice(j, 1);
+            j--;
+          }
+          if (path.length === 0) {
+            this.drawings.splice(i, 1);
+            i--;
+          }
+        }
+      }
+      // this.redrawCanvas();
+      return;
+    }
+
+    // drawing
+    if (this.leftMouseDown) {
       const color = '#000';
 
       // add the line to our drawing history
@@ -210,6 +280,14 @@ export default class Board {
       this.prevCursorX = this.cursorX;
       this.prevCursorY = this.cursorY;
     }
+  }
+
+  drawEraser(x, y) {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, this.eraserSize, 0, 2 * Math.PI);
+    this.ctx.fillStyle = '#f5f5f5';
+    this.ctx.fill();
+    this.ctx.closePath();
   }
 
   onMouseWheel(event) {
@@ -306,7 +384,7 @@ export default class Board {
 
     for (let i = 0; i < this.drawings.length; i++) {
       const segment = this.drawings[i];
-      for (let j = 0; j < segment.length; j += (this.panning || this.zooming) ? 3 : 1) {
+      for (let j = 0; j < segment.length; j++) {
         const line = segment[j];
         const ratio = this.scale / line.scale;
         if (ratio > 0.005 && ratio < 400) {
