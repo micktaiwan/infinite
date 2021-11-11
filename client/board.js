@@ -64,7 +64,8 @@ export default class Board {
     else if (event.key === 'z') this.startPan(event);
     else if (event.key === 'a') this.startZooming();
     else if (event.key === 'e') this.reset();
-    else if (event.key === 'd') this.startEraser();
+    else if (event.key === 'r') this.startEraser();
+    else if (event.key === 'd') this.startStraightLine();
   }
 
   onKeyUp(event) {
@@ -74,7 +75,8 @@ export default class Board {
     else if (event.key === 'z') this.stopPan(event);
     else if (event.key === '+') this.zoomStep(1.2);
     else if (event.key === 'a') this.stopZooming();
-    else if (event.key === 'd') this.stopEraser(event);
+    else if (event.key === 'r') this.stopEraser(event);
+    else if (event.key === 'd') this.stopStraightLine();
   }
 
   startPan(event) {
@@ -107,6 +109,15 @@ export default class Board {
       // this.toSVG(this.lines);
     }
     this.lines = [];
+  }
+
+  startStraightLine() {
+    this.saveLines();
+    this.straightLine = true;
+  }
+
+  stopStraightLine() {
+    this.straightLine = false;
   }
 
   startEraser() {
@@ -253,6 +264,10 @@ export default class Board {
         }
       }
       // this.redrawCanvas();
+      return;
+    }
+
+    if (this.straightLine) {
       return;
     }
 
