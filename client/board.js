@@ -23,6 +23,8 @@ export default class Board {
     // zoom amount
     this.scale = 1;
 
+    this.saveQueue = {};
+
     try {
       this.drawings = JSON.parse(localStorage.getItem('drawings'));
       const { scale, offsetX, offsetY } = JSON.parse(localStorage.getItem('position'));
@@ -123,11 +125,19 @@ export default class Board {
 
   // eslint-disable-next-line class-methods-use-this
   saveToLocalStorage(key, value) {
-    try {
-      localStorage.setItem(key, value);
-    } catch (e) {
-      alert(`Error saving to localstorage\n${e}`);
-    }
+    // console.log('called', key);
+    this.saveQueue[key] = value;
+    if (this.handleSaveTimeout) Meteor.clearTimeout(this.handleSaveTimeout);
+    this.handleSaveTimeout = Meteor.setTimeout(() => {
+      try {
+        Object.keys(this.saveQueue).forEach(k => {
+          localStorage.setItem(k, this.saveQueue[k]);
+          // console.log('saved', k);
+        });
+      } catch (e) {
+        alert(`Error saving to localstorage\n${e}`);
+      }
+    }, 2000);
   }
 
   saveLines() {
@@ -167,6 +177,7 @@ export default class Board {
     this.offsetX = 0;
     this.offsetY = 0;
     this.redrawCanvas();
+    this.savePosition();
   }
 
   clear() {
