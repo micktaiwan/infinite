@@ -19,7 +19,7 @@ module.exports = {
     // "no-lonely-if": 0,
     'prefer-destructuring': ['error', { object: true, array: false }],
     'no-empty': ['error', { allowEmptyCatch: true }],
-    // "no-console": 0,
+    'no-console': 0,
     'max-len': 0,
     'func-names': 0,
     // "key-spacing": 0,

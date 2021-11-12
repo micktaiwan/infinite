@@ -29,16 +29,48 @@ export default class Board {
 
     this.saveQueue = {};
 
-    try {
-      this.drawings = JSON.parse(localStorage.getItem('drawings'));
-      const { scale, offsetX, offsetY } = JSON.parse(localStorage.getItem('position'));
-      this.scale = scale || this.scale;
-      this.offsetX = offsetX || this.offsetX;
-      this.offsetY = offsetY || this.offsetY;
-      console.log('loaded', this.scale, this.offsetX, this.offsetY);
-    } catch (e) {
-      alert(`Error loading your drawings\n${e}`);
-    }
+    this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+
+    const self = this;
+    this.dbRequest = this.idb.open('infinite-db', 1);
+    this.dbRequest.onsuccess = () => {
+      self.db = self.dbRequest.result;
+      const objectStore = self.db.transaction('infinite-db').objectStore('infinite-db');
+      objectStore.openCursor().onsuccess = function (event) {
+        const cursor = event.target.result;
+        if (cursor) {
+          console.log('cursor', cursor.key);
+          // populate drawings
+          if (cursor.key === 'drawings') {
+            self.drawings = cursor.value;
+          } else if (cursor.key === 'position') {
+            self.offsetX = cursor.value.offsetX;
+            self.offsetY = cursor.value.offsetY;
+            self.scale = cursor.value.scale;
+          }
+          self.redrawCanvas();
+          cursor.continue();
+        }
+      };
+    };
+
+    this.dbRequest.onupgradeneeded = function (event) {
+      console.log('onupgradeneeded');
+      const db = event.target.result;
+      db.onerror = function (e) { console.log(e); };
+      db.createObjectStore('infinite-db');
+    };
+
+    // try {
+    //   this.drawings = JSON.parse(localStorage.getItem('drawings'));
+    //   const { scale, offsetX, offsetY } = JSON.parse(localStorage.getItem('position'));
+    //   this.scale = scale || this.scale;
+    //   this.offsetX = offsetX || this.offsetX;
+    //   this.offsetY = offsetY || this.offsetY;
+    //   console.log('loaded', this.scale, this.offsetX, this.offsetY);
+    // } catch (e) {
+    //   alert(`Error loading your drawings\n${e}`);
+    // }
 
     this.leftMouseDown = false;
     this.rightMouseDown = false;
@@ -68,9 +100,8 @@ export default class Board {
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
     document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     document.addEventListener('keydown', this.onKeyDown.bind(this), false);
-    this.redrawCanvas();
+    // this.redrawCanvas();
 
-    const self = this;
     // if the window changes size, redraw the canvas
     window.addEventListener('resize', () => {
       self.redrawCanvas();
@@ -105,7 +136,8 @@ export default class Board {
   }
 
   savePosition() {
-    this.saveToLocalStorage('position', JSON.stringify({ scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY }));
+    // this.saveToLocalStorage('position', JSON.stringify({ scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY }));
+    this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
   }
 
   stopPan() {
@@ -129,22 +161,32 @@ export default class Board {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  saveToLocalStorage(key, value) {
-    // console.log('called', key);
-    this.saveQueue[key] = value;
-    if (this.handleSaveTimeout) Meteor.clearTimeout(this.handleSaveTimeout);
-    const self = this;
-    this.handleSaveTimeout = Meteor.setTimeout(() => {
-      try {
-        Object.keys(self.saveQueue).forEach(k => {
-          if (self.saveQueue[k]) localStorage.setItem(k, self.saveQueue[k]);
-          delete self.saveQueue[k];
-          console.log('saved', k);
-        });
-      } catch (e) {
-        alert(`Error saving to localstorage\n${e}`);
-      }
-    }, 2000);
+  // saveToLocalStorage(key, value) {
+  //   // console.log('called', key);
+  //   this.saveQueue[key] = value;
+  //   if (this.handleSaveTimeout) Meteor.clearTimeout(this.handleSaveTimeout);
+  //   const self = this;
+  //   this.handleSaveTimeout = Meteor.setTimeout(() => {
+  //     try {
+  //       Object.keys(self.saveQueue).forEach(k => {
+  //         if (self.saveQueue[k]) localStorage.setItem(k, self.saveQueue[k]);
+  //         delete self.saveQueue[k];
+  //         console.log('saved', k);
+  //       });
+  //     } catch (e) {
+  //       alert(`Error saving to localstorage\n${e}`);
+  //     }
+  //   }, 2000);
+  // }
+
+  saveToIndexedDB(key, value) {
+    // save to indexedDB
+    const transaction = this.db.transaction(['infinite-db'], 'readwrite');
+    const objectStore = transaction.objectStore('infinite-db');
+    const request = objectStore.put(value, key);
+    request.onerror = function (e) {
+      console.log(e);
+    };
   }
 
   saveDrawings(forceSave = false) {
@@ -153,7 +195,8 @@ export default class Board {
       this.forceSave = false;
       this.drawings.push(this.lines);
       // this.toSVG(this.lines);
-      this.saveToLocalStorage('drawings', JSON.stringify(this.drawings));
+      // this.saveToLocalStorage('drawings', JSON.stringify(this.drawings));
+      this.saveToIndexedDB('drawings', this.drawings);
     }
     this.lines = [];
   }
@@ -495,7 +538,6 @@ export default class Board {
         this.ctx.stroke();
       }
     }
-    this.ctx.closePath();
   }
 
   notDrawing() {
