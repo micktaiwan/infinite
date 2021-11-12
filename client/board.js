@@ -3,6 +3,8 @@ const imageTracer = require('./lib/imagetracer');
 export default class Board {
   constructor() {
     this.drawings = [];
+    const storage = localStorage.getItem('drawings');
+    if (storage) this.drawings = JSON.parse(storage);
     this.lines = [];
     this.pressure = 2;
     this.eraserSize = 20;
@@ -109,6 +111,7 @@ export default class Board {
     if (this.lines.length) {
       this.drawings.push(this.lines);
       // this.toSVG(this.lines);
+      localStorage.setItem('drawings', JSON.stringify(this.drawings));
     }
     this.lines = [];
   }
