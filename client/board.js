@@ -1,3 +1,7 @@
+if (module.hot) {
+  module.hot.decline();
+}
+
 const imageTracer = require('./lib/imagetracer');
 
 export default class Board {
@@ -31,6 +35,7 @@ export default class Board {
       this.scale = scale || this.scale;
       this.offsetX = offsetX || this.offsetX;
       this.offsetY = offsetY || this.offsetY;
+      console.log('loaded', this.scale, this.offsetX, this.offsetY);
     } catch (e) {
       alert(`Error loading your drawings\n${e}`);
     }
@@ -128,11 +133,13 @@ export default class Board {
     // console.log('called', key);
     this.saveQueue[key] = value;
     if (this.handleSaveTimeout) Meteor.clearTimeout(this.handleSaveTimeout);
+    const self = this;
     this.handleSaveTimeout = Meteor.setTimeout(() => {
       try {
-        Object.keys(this.saveQueue).forEach(k => {
-          localStorage.setItem(k, this.saveQueue[k]);
-          // console.log('saved', k);
+        Object.keys(self.saveQueue).forEach(k => {
+          if (self.saveQueue[k]) localStorage.setItem(k, self.saveQueue[k]);
+          delete self.saveQueue[k];
+          console.log('saved', k);
         });
       } catch (e) {
         alert(`Error saving to localstorage\n${e}`);
@@ -140,8 +147,10 @@ export default class Board {
     }, 2000);
   }
 
-  saveLines() {
-    if (this.lines.length) {
+  saveDrawings(forceSave = false) {
+    if (this.lines.length) forceSave = true;
+    if (forceSave) {
+      this.forceSave = false;
       this.drawings.push(this.lines);
       // this.toSVG(this.lines);
       this.saveToLocalStorage('drawings', JSON.stringify(this.drawings));
@@ -150,7 +159,7 @@ export default class Board {
   }
 
   startStraightLine(event) {
-    this.saveLines();
+    this.saveDrawings();
     this.updateCursorPos(event);
     this.pressure = 2;
     this.straightLine = true;
@@ -158,11 +167,11 @@ export default class Board {
 
   stopStraightLine() {
     this.straightLine = false;
-    this.redrawCanvas();
+    this.redrawCanvas(); // to get rid of tmp lines that have been drawn
   }
 
   startEraser() {
-    this.saveLines();
+    this.saveDrawings(true);
     this.eraser = true;
   }
 
@@ -170,6 +179,7 @@ export default class Board {
     this.eraser = false;
     this.updateCursorPos(event);
     this.redrawCanvas();
+    this.saveDrawings(true);
   }
 
   reset() {
@@ -217,8 +227,8 @@ export default class Board {
   }
 
   onMouseUp() {
-    this.stopPan();
-    this.saveLines();
+    if (this.panning) this.stopPan();
+    this.saveDrawings();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
@@ -495,16 +505,22 @@ export default class Board {
   redrawCanvas() {
     if (this.redrawing) return;
     this.redrawing = true;
-    // console.log('redraw');
+    console.log('redraw');
 
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     for (let i = 0; i < this.drawings.length; i++) {
       const line = this.drawings[i][0];
-      const ratio = this.scale / line.scale;
-      if (this.notDrawing() || ratio > 2) this.drawPath(i);
-      else this.drawSLine(i);
+      if (!line) {
+        this.drawings.splice(i, 1);
+        i--;
+        console.log('cleaned');
+      } else {
+        const ratio = this.scale / line.scale;
+        if (this.notDrawing() || ratio > 2) this.drawPath(i);
+        else this.drawSLine(i);
+      }
     }
 
     this.infos();
@@ -518,5 +534,7 @@ export default class Board {
     this.ctx.fillText(this.scale, 90, 10);
     this.ctx.fillText('Lines', 10, 25);
     this.ctx.fillText(this.drawings.length, 90, 25);
+    this.ctx.fillText('Size', 10, 40);
+    this.ctx.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
   }
 }
