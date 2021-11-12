@@ -3,8 +3,6 @@ const imageTracer = require('./lib/imagetracer');
 export default class Board {
   constructor() {
     this.drawings = [];
-    const storage = localStorage.getItem('drawings');
-    if (storage) this.drawings = JSON.parse(storage);
     this.lines = [];
     this.pressure = 2;
     this.eraserSize = 20;
@@ -24,6 +22,16 @@ export default class Board {
 
     // zoom amount
     this.scale = 1;
+
+    try {
+      this.drawings = JSON.parse(localStorage.getItem('drawings'));
+      const { scale, offsetX, offsetY } = JSON.parse(localStorage.getItem('position'));
+      this.scale = scale || this.scale;
+      this.offsetX = offsetX || this.offsetX;
+      this.offsetY = offsetY || this.offsetY;
+    } catch (e) {
+      alert(`Error loading your drawings\n${e}`);
+    }
 
     this.leftMouseDown = false;
     this.rightMouseDown = false;
@@ -89,9 +97,14 @@ export default class Board {
     this.panning = true;
   }
 
+  savePosition() {
+    this.saveToLocalStorage('position', JSON.stringify({ scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY }));
+  }
+
   stopPan() {
     this.panning = false;
     this.redrawCanvas();
+    this.savePosition();
   }
 
   startZooming() {
@@ -105,13 +118,23 @@ export default class Board {
   stopZooming() {
     this.zooming = false;
     this.redrawCanvas();
+    this.savePosition();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  saveToLocalStorage(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      alert(`Error saving to localstorage\n${e}`);
+    }
   }
 
   saveLines() {
     if (this.lines.length) {
       this.drawings.push(this.lines);
       // this.toSVG(this.lines);
-      localStorage.setItem('drawings', JSON.stringify(this.drawings));
+      this.saveToLocalStorage('drawings', JSON.stringify(this.drawings));
     }
     this.lines = [];
   }
@@ -183,6 +206,7 @@ export default class Board {
   }
 
   onMouseUp() {
+    this.stopPan();
     this.saveLines();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
