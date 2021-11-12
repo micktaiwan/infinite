@@ -5,7 +5,7 @@ export default class Board {
     this.drawings = [];
     this.lines = [];
     this.pressure = 2;
-    this.eraserSize = 30;
+    this.eraserSize = 20;
 
     // disable right clicking
     document.oncontextmenu = () => false;
@@ -27,6 +27,9 @@ export default class Board {
     this.rightMouseDown = false;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
+    // this.ctx.lineCap = 'round';
+    // this.ctx.lineJoin = 'round';
+
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.canvas.addEventListener(
@@ -65,7 +68,7 @@ export default class Board {
     else if (event.key === 'a') this.startZooming();
     else if (event.key === 'e') this.reset();
     else if (event.key === 'r') this.startEraser();
-    else if (event.key === 'd') this.startStraightLine();
+    else if (event.key === 'd') this.startStraightLine(event);
   }
 
   onKeyUp(event) {
@@ -84,9 +87,8 @@ export default class Board {
     this.panning = true;
   }
 
-  stopPan(event) {
+  stopPan() {
     this.panning = false;
-    this.updateCursorPos(event);
     this.redrawCanvas();
   }
 
@@ -111,13 +113,16 @@ export default class Board {
     this.lines = [];
   }
 
-  startStraightLine() {
+  startStraightLine(event) {
     this.saveLines();
+    this.updateCursorPos(event);
+    this.pressure = 2;
     this.straightLine = true;
   }
 
   stopStraightLine() {
     this.straightLine = false;
+    this.redrawCanvas();
   }
 
   startEraser() {
@@ -156,7 +161,6 @@ export default class Board {
   }
 
   onMouseDown(event) {
-    // update the cursor coordinates
     this.updateCursorPos(event);
     this.lines = [];
 
@@ -175,12 +179,11 @@ export default class Board {
     }
   }
 
-  onMouseUp(event) {
+  onMouseUp() {
     this.saveLines();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
-    this.stopPan(event);
   }
 
   boundingBox() {
@@ -208,8 +211,8 @@ export default class Board {
     // });
   }
 
-  dist(x1, y1, x2, y2) {
-    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) * this.scale;
+  dist(x1, y1, x2, y2, atScale = true) {
+    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) * (atScale ? this.scale : 1);
   }
 
   onMouseMove(event) {
@@ -224,21 +227,25 @@ export default class Board {
 
     this.pressure = event.pressure * 5;
 
-    const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY);
+    const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
-    if (this.zooming && dist > 2) {
-      this.mouseZoom(event);
-      this.prevCursorX = this.cursorX;
-      this.prevCursorY = this.cursorY;
+    if (this.zooming) {
+      if (dist > 10) {
+        this.mouseZoom(event);
+        this.prevCursorX = this.cursorX;
+        this.prevCursorY = this.cursorY;
+      }
       return;
     }
 
-    if (this.panning && dist > 2) {
-      this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
-      this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
-      this.redrawCanvas();
-      this.prevCursorX = this.cursorX;
-      this.prevCursorY = this.cursorY;
+    if (this.panning) {
+      if (dist > 10) {
+        this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
+        this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
+        this.redrawCanvas();
+        this.prevCursorX = this.cursorX;
+        this.prevCursorY = this.cursorY;
+      }
       return;
     }
 
@@ -268,11 +275,19 @@ export default class Board {
     }
 
     if (this.straightLine) {
+      if (this.leftMouseDown) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.prevCursorX, this.prevCursorY);
+        this.ctx.lineTo(this.cursorX, this.cursorY);
+        this.ctx.stroke();
+        this.ctx.closePath();
+      }
       return;
     }
 
     // drawing
     if (this.leftMouseDown) {
+      // if (dist < 3) return;
       const color = '#000';
 
       // add the line to our drawing history
@@ -392,33 +407,70 @@ export default class Board {
     return this.canvas.clientWidth / this.scale;
   }
 
+  drawSLine(index) {
+    const segment = this.drawings[index];
+
+    for (let j = 0; j < segment.length; j++) {
+      const line = segment[j];
+      const ratio = this.scale / line.scale;
+      if (ratio > 0.005 && ratio < 400) {
+        this.drawLine(
+          this.toScreenX(line.x0),
+          this.toScreenY(line.y0),
+          this.toScreenX(line.x1),
+          this.toScreenY(line.y1),
+          // this.scale / line.scale > 1 ?
+          //   line.pressure * Math.min(this.scale / line.scale, 2) :
+          //   line.pressure * (this.scale / line.scale),
+          line.pressure * ratio,
+          line.color,
+        );
+      }
+    }
+  }
+
+  drawPath(index) {
+    const segment = this.drawings[index];
+
+    // this.ctx.lineWidth = line.pressure * ratio;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.toScreenX(segment[0].x0), this.toScreenY(segment[0].y0));
+
+    for (let j = 0; j < segment.length; j++) {
+      const line = segment[j];
+      const ratio = this.scale / line.scale;
+      if (ratio > 0.005 && ratio < 400) {
+        this.ctx.strokeStyle = this.color;
+        if (this.notDrawing()) this.ctx.lineWidth = 1;
+        else this.ctx.lineWidth = line.pressure * ratio;
+        this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
+        this.ctx.stroke();
+      }
+    }
+    this.ctx.closePath();
+  }
+
+  notDrawing() {
+    return this.zooming || this.panning;
+  }
+
   redrawCanvas() {
+    if (this.redrawing) return;
+    this.redrawing = true;
     // console.log('redraw');
+
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     for (let i = 0; i < this.drawings.length; i++) {
-      const segment = this.drawings[i];
-      for (let j = 0; j < segment.length; j++) {
-        const line = segment[j];
-        const ratio = this.scale / line.scale;
-        if (ratio > 0.005 && ratio < 400) {
-          this.drawLine(
-            this.toScreenX(line.x0),
-            this.toScreenY(line.y0),
-            this.toScreenX(line.x1),
-            this.toScreenY(line.y1),
-            // this.scale / line.scale > 1 ?
-            //   line.pressure * Math.min(this.scale / line.scale, 2) :
-            //   line.pressure * (this.scale / line.scale),
-            line.pressure * ratio,
-            line.color,
-          );
-        }
-      }
+      const line = this.drawings[i][0];
+      const ratio = this.scale / line.scale;
+      if (this.notDrawing() || ratio > 2) this.drawPath(i);
+      else this.drawSLine(i);
     }
 
     this.infos();
+    this.redrawing = false;
   }
 
   infos() {
