@@ -425,7 +425,7 @@ export default class Board {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
     // const deltaX = Math.abs(this.startX - this.cursorX);
     const deltaY = Math.abs(this.startY - this.cursorY);
-    const scaleAmount = reverse * deltaY / 5000;
+    const scaleAmount = reverse * deltaY / 500;
     this.scale *= (1 + scaleAmount);
 
     const distX = this.startX / this.canvas.clientWidth;
@@ -549,24 +549,28 @@ export default class Board {
     this.redrawing = true;
     console.log('redraw');
 
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    const self = this;
+    const draw = function () {
+      self.ctx.fillStyle = '#fff';
+      self.ctx.fillRect(0, 0, self.canvas.width, self.canvas.height);
 
-    for (let i = 0; i < this.drawings.length; i++) {
-      const line = this.drawings[i][0];
-      if (!line) {
-        this.drawings.splice(i, 1);
-        i--;
-        console.log('cleaned');
-      } else {
-        const ratio = this.scale / line.scale;
-        if (this.notDrawing() || ratio > 2) this.drawPath(i);
-        else this.drawSLine(i);
+      for (let i = 0; i < self.drawings.length; i++) {
+        const line = self.drawings[i][0];
+        if (!line) {
+          self.drawings.splice(i, 1);
+          i--;
+          console.log('cleaned');
+        } else {
+          const ratio = self.scale / line.scale;
+          if (self.notDrawing() || ratio > 2) self.drawPath(i);
+          else self.drawSLine(i);
+        }
       }
-    }
 
-    this.infos();
-    this.redrawing = false;
+      self.infos();
+      self.redrawing = false;
+    };
+    requestAnimationFrame(draw);
   }
 
   infos() {
