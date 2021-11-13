@@ -27,6 +27,8 @@ export default class Board {
     // zoom amount
     this.scale = 1;
 
+    this.color = '#000';
+
     this.saveQueue = {};
 
     this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
@@ -76,27 +78,26 @@ export default class Board {
     this.rightMouseDown = false;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
+    this.ctx.globalAlpha = 0.5;
+    this.selCanvas = document.getElementById('selection');
+    this.selCtx = this.selCanvas.getContext('2d');
+    this.selCtx.font = 'Calibri';
+    this.selCtx.fillStyle = '#999';
+
     // this.ctx.lineCap = 'round';
     // this.ctx.lineJoin = 'round';
 
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
-    this.canvas.addEventListener(
-      'pointerdown',
-      this.onMouseDown.bind(this),
-      false,
-    );
+
+    this.selCanvas.width = window.innerWidth;
+    this.selCanvas.height = window.innerHeight;
+
+    this.canvas.addEventListener('pointerdown', this.onMouseDown.bind(this), false);
     this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), false);
-    this.canvas.addEventListener(
-      'pointerout',
-      this.onMouseUp.bind(this),
-      false,
-    );
-    this.canvas.addEventListener(
-      'pointermove',
-      this.onMouseMove.bind(this),
-      false,
-    );
+    this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), false);
+    this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), false);
+    this.selCanvas.addEventListener('pointermove', this.onMouseMove.bind(this), false);
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
     document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     document.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -112,26 +113,30 @@ export default class Board {
     if (event.repeat) return;
     // console.log('down', event);
     if (event.key === 'z' && event.metaKey) this.undo();
-    else if (event.key === 'z') this.startPan(event);
+    else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
-    else if (event.key === 'e') this.reset();
-    else if (event.key === 'r') this.startEraser();
-    else if (event.key === 'd') this.startStraightLine(event);
+    else if (event.key === '&') this.reset();
+    else if (event.key === 'e') this.startEraser();
+    else if (event.key === 'd') this.startStraightLine();
+    else if (event.key === 's') this.startRectSelection();
   }
 
   onKeyUp(event) {
     if (event.repeat) return;
     // console.log('up', event);
-    if (event.keyCode === 27) this.clear();
-    else if (event.key === 'z') this.stopPan(event);
+    if (event.key === 'z') this.stopPan();
     else if (event.key === '+') this.zoomStep(1.2);
     else if (event.key === 'a') this.stopZooming();
-    else if (event.key === 'r') this.stopEraser(event);
+    else if (event.key === 'e') this.stopEraser();
     else if (event.key === 'd') this.stopStraightLine();
+    else if (event.key === 's') this.stopRectSelection();
   }
 
-  startPan(event) {
-    this.updateCursorPos(event);
+  startPan() {
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
+    this.hasMoved = false;
+    this.canvas.style.cursor = 'move';
     this.panning = true;
   }
 
@@ -141,8 +146,9 @@ export default class Board {
   }
 
   stopPan() {
+    this.canvas.style.cursor = 'default';
     this.panning = false;
-    this.redrawCanvas();
+    if (this.hasMoved) this.redrawCanvas();
     this.savePosition();
   }
 
@@ -201,28 +207,60 @@ export default class Board {
     this.lines = [];
   }
 
-  startStraightLine(event) {
-    this.saveDrawings();
-    this.updateCursorPos(event);
-    this.pressure = 2;
+  startStraightLine() {
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
     this.straightLine = true;
+    this.selCtx.lineWidth = 2;
+    this.selCtx.strokeStyle = '#000';
   }
 
   stopStraightLine() {
     this.straightLine = false;
-    this.redrawCanvas(); // to get rid of tmp lines that have been drawn
+    this.lines.push({
+      scale: this.scale,
+      pressure: 2,
+      x0: this.toTrueX(this.startX),
+      y0: this.toTrueY(this.startY),
+      x1: this.toTrueX(this.cursorX),
+      y1: this.toTrueY(this.cursorY),
+      color: this.color,
+      type: this.type,
+    });
+    this.saveDrawings();
+    this.redrawCanvas();
+    this.redrawSelCanvas();
   }
 
   startEraser() {
-    this.saveDrawings(true);
     this.eraser = true;
   }
 
-  stopEraser(event) {
+  stopEraser() {
     this.eraser = false;
-    this.updateCursorPos(event);
     this.redrawCanvas();
     this.saveDrawings(true);
+  }
+
+  startRectSelection() {
+    // this.saveDrawings(true);
+    this.redrawSelCanvas();
+    this.rectSelection = true;
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
+    this.selCanvas.style.cursor = 'crosshair';
+  }
+
+  stopRectSelection() {
+    this.rectSelection = false;
+    this.selection = {
+      type: 'rect',
+      x: this.startX,
+      y: this.startY,
+      width: this.cursorX - this.startX,
+      height: this.cursorY - this.startY,
+    };
+    this.selCanvas.style.cursor = 'default';
   }
 
   reset() {
@@ -316,12 +354,23 @@ export default class Board {
     const prevScaledX = this.toTrueX(this.prevCursorX);
     const prevScaledY = this.toTrueY(this.prevCursorY);
 
-    this.pressure = event.pressure * 5;
+    this.pressure = event.pressure * 3;
 
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
+    if (this.rectSelection) {
+      this.hasMoved = true;
+      this.redrawSelCanvas();
+      this.selCtx.lineWidth = 1;
+      this.selCtx.strokeStyle = '#f90';
+      this.selCtx.strokeRect(this.startX, this.startY, this.cursorX - this.startX, this.cursorY - this.startY);
+      this.prevCursorX = this.cursorX;
+      this.prevCursorY = this.cursorY;
+      return;
+    }
+
     if (this.zooming) {
-      if (dist > 10) {
+      if (dist > 5) {
         this.mouseZoom(event);
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
@@ -330,7 +379,8 @@ export default class Board {
     }
 
     if (this.panning) {
-      if (dist > 10) {
+      if (dist > 5) {
+        this.hasMoved = true;
         this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
         this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
         this.redrawCanvas();
@@ -366,19 +416,13 @@ export default class Board {
     }
 
     if (this.straightLine) {
-      if (this.leftMouseDown) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.prevCursorX, this.prevCursorY);
-        this.ctx.lineTo(this.cursorX, this.cursorY);
-        this.ctx.stroke();
-        this.ctx.closePath();
-      }
+      this.redrawSelCanvas();
+      this.drawLine(this.startX, this.startY, this.cursorX, this.cursorY, 2, this.color, this.selCtx);
       return;
     }
 
     // drawing
     if (this.leftMouseDown) {
-      // if (dist < 3) return;
       const color = '#000';
 
       // add the line to our drawing history
@@ -406,7 +450,7 @@ export default class Board {
   drawEraser(x, y) {
     this.ctx.beginPath();
     this.ctx.arc(x, y, this.eraserSize, 0, 2 * Math.PI);
-    this.ctx.fillStyle = '#f5f5f5';
+    this.ctx.fillStyle = '#fff';
     this.ctx.fill();
     this.ctx.closePath();
   }
@@ -425,7 +469,7 @@ export default class Board {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
     // const deltaX = Math.abs(this.startX - this.cursorX);
     const deltaY = Math.abs(this.startY - this.cursorY);
-    const scaleAmount = reverse * deltaY / 500;
+    const scaleAmount = reverse * deltaY / 1000;
     this.scale *= (1 + scaleAmount);
 
     const distX = this.startX / this.canvas.clientWidth;
@@ -465,13 +509,13 @@ export default class Board {
     this.redrawCanvas();
   }
 
-  drawLine(x0, y0, x1, y1, lineWidth, color = '#000') {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x0, y0);
-    this.ctx.lineTo(x1, y1);
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth;
-    this.ctx.stroke();
+  drawLine(x0, y0, x1, y1, lineWidth, color = '#000', ctx = this.ctx) {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
   }
 
   toScreenX(xTrue) {
@@ -544,15 +588,16 @@ export default class Board {
     return this.zooming || this.panning;
   }
 
-  redrawCanvas() {
+  redrawCanvas(sync = false) {
     if (this.redrawing) return;
     this.redrawing = true;
-    console.log('redraw');
+    // console.log('redraw', sync);
+    // const before = new Date();
 
     const self = this;
     const draw = function () {
-      self.ctx.fillStyle = '#fff';
-      self.ctx.fillRect(0, 0, self.canvas.width, self.canvas.height);
+      // self.ctx.fillStyle = '#fff';
+      self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
       for (let i = 0; i < self.drawings.length; i++) {
         const line = self.drawings[i][0];
@@ -567,20 +612,24 @@ export default class Board {
         }
       }
 
-      self.infos();
       self.redrawing = false;
+      // console.log(new Date() - before);
     };
-    requestAnimationFrame(draw);
+    if (sync) draw();
+    else requestAnimationFrame(draw);
+  }
+
+  redrawSelCanvas() {
+    const self = this;
+    self.selCtx.clearRect(0, 0, self.selCanvas.width, self.selCanvas.height);
   }
 
   infos() {
-    this.ctx.font = 'Calibri';
-    this.ctx.fillStyle = '#999';
-    this.ctx.fillText('Scale', 10, 10);
-    this.ctx.fillText(this.scale, 90, 10);
-    this.ctx.fillText('Lines', 10, 25);
-    this.ctx.fillText(this.drawings.length, 90, 25);
-    this.ctx.fillText('Size', 10, 40);
-    this.ctx.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
+    this.selCtx.fillText('Scale', 10, 10);
+    this.selCtx.fillText(this.scale, 90, 10);
+    this.selCtx.fillText('Lines', 10, 25);
+    this.selCtx.fillText(this.drawings.length, 90, 25);
+    this.selCtx.fillText('Size', 10, 40);
+    this.selCtx.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
   }
 }
