@@ -1,22 +1,33 @@
 import { Template } from 'meteor/templating';
 // import { ReactiveVar } from 'meteor/reactive-var';
-import Board from './board';
+import LayerManager from './layerManager';
 import './main.html';
 
-Template.canvas.onRendered(function () {
-  this.board = new Board();
+function trackActiveElement() {
+  console.log('active', document.activeElement);
+}
+
+function trackActiveElementLost() {
+  console.log('lost');
+}
+
+Template.layers.onRendered(function () {
+  this.manager = new LayerManager();
+  // document.addEventListener('focus', trackActiveElement, true);
+  // document.addEventListener('blur', trackActiveElementLost, true);
 });
 
-Template.canvas.helpers({
-  counter() {
-    return Template.instance().counter.get();
+Template.layers.events({
+  'mouseenter #layers'(e, tpl) {
+    tpl.manager.focusCurrentLayer();
+    console.log('focus');
   },
-});
+  'click .js-focus-sel'(e, tpl) {
+    tpl.manager.layers[1].canvas.visible = false;
+    tpl.manager.layers[1].canvas.style.display = 'none';
 
-Template.canvas.events({
-  'click button'(event, instance) {
-    // increment the counter when button is clicked
-    instance.counter.set(instance.counter.get() + 1);
+    tpl.manager.layers[0].canvas.zIndex = 100;
+    tpl.manager.layers[0].canvas.focus();
+    console.log('click');
   },
-
 });

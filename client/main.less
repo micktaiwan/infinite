@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   background: #fff2ea;
   left: 0;
   right: 0;
@@ -10,14 +11,43 @@ html, body {
   overflow: hidden;
 }
 
-#canvas {
-  position: absolute;
-  z-index: 1;
-  background-color: transparent;
+#layers {
+  position: relative;
+  canvas {
+    position: fixed;
+    left: 51px;
+    top: 0px;
+    background-color: transparent;
+  }
 }
 
-#selection {
+#menu {
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 50px;
+  height: 100%;
+  background: #686868;
   position: absolute;
-  z-index: 0;
-  background-color: transparent;
+
+  li {
+    margin: 0;
+    padding: 5px;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+button {
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 3px;
+  padding: 5px;
+  &:hover {
+    cursor: pointer;
+    background: #f0f0f0;
+  }
 }

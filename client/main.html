@@ -1,14 +1,21 @@
 <head>
   <title>infinite</title>
+  <script src="https://kit.fontawesome.com/c2e3c228ea.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
 
-  {{> canvas}}
+  {{> layers}}
 
 </body>
 
-<template name="canvas">
-  <canvas id="selection">Your browser does not support HTML5 canvas</canvas>
-  <canvas id="canvas">Your browser does not support HTML5 canvas</canvas>
+<template name="layers">
+
+  <ul id="menu">
+    <li><button><i class="fas fa-plus"></i></button></li>
+    <li><button class="js-focus-sel">R</button></li>
+  </ul>
+
+  <div id="layers"></div>
+
 </template>
