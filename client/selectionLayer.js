@@ -2,7 +2,6 @@ import Layer from './layer';
 
 export default class SelectionLayer extends Layer {
   constructor(manager, index) {
-    console.log('selection layer', index);
     super(manager, index);
 
     // this.ctx.font = 'Calibri';

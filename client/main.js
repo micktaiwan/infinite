@@ -11,10 +11,20 @@ function trackActiveElementLost() {
   console.log('lost');
 }
 
+Template.registerHelper('log', text => console.log(text));
+Template.registerHelper('add', (v, nb) => v + nb);
+
 Template.layers.onRendered(function () {
   this.manager = new LayerManager();
+  Session.set('layers', this.manager.getLayers());
   // document.addEventListener('focus', trackActiveElement, true);
   // document.addEventListener('blur', trackActiveElementLost, true);
+});
+
+Template.layers.helpers({
+  layers() {
+    return Session.get('layers');
+  },
 });
 
 Template.layers.events({
@@ -22,12 +32,12 @@ Template.layers.events({
     tpl.manager.focusCurrentLayer();
     console.log('focus');
   },
-  'click .js-focus-sel'(e, tpl) {
-    tpl.manager.layers[1].canvas.visible = false;
-    tpl.manager.layers[1].canvas.style.display = 'none';
-
-    tpl.manager.layers[0].canvas.zIndex = 100;
-    tpl.manager.layers[0].canvas.focus();
-    console.log('click');
+  'click .js-focus-layer'(e, tpl) {
+    console.log('focus', this);
+    tpl.manager.focus(this);
+  },
+  'click .js-add-layer'(e, tpl) {
+    tpl.manager.addLayer();
+    Session.set('layers', tpl.manager.getLayers());
   },
 });

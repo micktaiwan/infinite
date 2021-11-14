@@ -1,11 +1,10 @@
 export default class Layer {
   constructor(manager, index) {
-    console.log('Layer constructor', index);
     this.manager = manager;
     this.index = index;
 
     this.canvas = document.createElement('canvas');
-    this.canvas.style.zIndex = index + 1;
+    // this.canvas.style.zIndex = index + 1;
     this.canvas.tabIndex = index;
     this.ctx = this.canvas.getContext('2d');
     this.el = document.getElementById('layers');

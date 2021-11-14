@@ -55,7 +55,7 @@ export default class BoardLayer extends Layer {
 
   onKeyDown(event) {
     if (event.repeat) return;
-    // console.log('down', event);
+    console.log('down', this.index);
     if (event.key === 'z' && event.metaKey) this.undo();
     else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
@@ -81,7 +81,7 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseMove(event) {
-    // console.log('move', event);
+    console.log('move', this.index);
 
     // get mouse position
     this.cursorX = event.clientX - 50;

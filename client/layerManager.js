@@ -19,10 +19,9 @@ export default class LayerManager {
 
     this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     this.layers = [];
-    this.selectionLayer = new SelectionLayer(this, 0);
-    this.layers.push(this.selectionLayer);
-    this.layers.push(new BoardLayer(this, 1));
-    this.currentLayer = 1;
+    this.selectionLayer = new SelectionLayer(this, -1);
+    this.layers.push(new BoardLayer(this, 0));
+    this.currentLayer = 0;
 
     // disable right clicking
     // document.oncontextmenu = () => false;
@@ -30,5 +29,23 @@ export default class LayerManager {
 
   focusCurrentLayer() {
     this.layers[this.currentLayer].focus();
+  }
+
+  focus(index) {
+    console.log('LayerManager', index);
+    this.layers[this.currentLayer].canvas.style.zIndex = 1;
+    this.layers[index].canvas.style.zIndex = 100;
+    this.currentLayer = index;
+    this.focusCurrentLayer();
+  }
+
+  getLayers() {
+    return this.layers.map(l => l.index);
+  }
+
+  addLayer() {
+    this.currentLayer = this.layers.length; // add one
+    this.layers.push(new BoardLayer(this, this.currentLayer));
+    this.focusCurrentLayer();
   }
 }
