@@ -31,10 +31,18 @@ export default class LayerManager {
     this.layers[this.currentLayer].focus();
   }
 
+  dimOpacityForAllLayers() {
+    this.layers.forEach(layer => {
+      layer.canvas.style.opacity = 0.4;
+    });
+  }
+
   focus(index) {
     console.log('LayerManager', index);
+    this.dimOpacityForAllLayers();
     this.layers[this.currentLayer].canvas.style.zIndex = 1;
     this.layers[index].canvas.style.zIndex = 100;
+    this.layers[index].canvas.style.opacity = 1;
     this.currentLayer = index;
     this.focusCurrentLayer();
   }
@@ -44,8 +52,13 @@ export default class LayerManager {
   }
 
   addLayer() {
+    this.dimOpacityForAllLayers();
     this.currentLayer = this.layers.length; // add one
     this.layers.push(new BoardLayer(this, this.currentLayer));
     this.focusCurrentLayer();
+  }
+
+  getActiveLayer() {
+    return this.currentLayer;
   }
 }

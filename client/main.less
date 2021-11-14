@@ -22,6 +22,7 @@ body {
 }
 
 #menu {
+  user-select: none;
   z-index: 100;
   list-style: none;
   margin: 0;
@@ -38,6 +39,10 @@ body {
 
   button {
     width: 100%;
+    &.active {
+      background: rgb(93, 146, 100);
+      color: #fff;
+    }
   }
 }
 

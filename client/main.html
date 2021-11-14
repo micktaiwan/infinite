@@ -14,7 +14,7 @@
   <ul id="menu">
     <li><button class="js-add-layer"><i class="fas fa-plus"></i></button></li>
     {{#each layers}}
-      <li><button class="js-focus-layer">{{add this 1}}</button></li>
+      <li><button class="{{active this}} js-focus-layer">{{add this 1}}</button></li>
     {{/each}}
   </ul>
 
