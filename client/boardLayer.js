@@ -32,9 +32,9 @@ export default class BoardLayer extends Layer {
         if (cursor) {
           console.log('cursor', cursor.key);
           // populate drawings
-          if (cursor.key === 'drawings') {
+          if (cursor.key === `drawings-${self.index}`) {
             self.drawings = cursor.value;
-          } else if (cursor.key === 'position') {
+          } else if (cursor.key === `position-${self.index}`) {
             self.offsetX = cursor.value.offsetX;
             self.offsetY = cursor.value.offsetY;
             self.scale = cursor.value.scale;
@@ -371,10 +371,14 @@ export default class BoardLayer extends Layer {
     // save to indexedDB
     const transaction = this.db.transaction(['infinite-db'], 'readwrite');
     const objectStore = transaction.objectStore('infinite-db');
-    const request = objectStore.put(value, key);
+    const request = objectStore.put(value, `${key}-${this.index}`);
     request.onerror = function (e) {
       console.log(e);
     };
+  }
+
+  savePosition() {
+    this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
   }
 
   saveDrawings(forceSave = false) {
@@ -383,8 +387,7 @@ export default class BoardLayer extends Layer {
       this.forceSave = false;
       this.drawings.push(this.lines);
       // this.toSVG(this.lines);
-      // this.saveToLocalStorage('drawings', JSON.stringify(this.drawings));
-      // this.saveToIndexedDB('drawings', this.drawings);
+      this.saveToIndexedDB('drawings', this.drawings);
     }
     this.lines = [];
   }

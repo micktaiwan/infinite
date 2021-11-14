@@ -31,11 +31,6 @@ export default class Layer {
     this.canvas.focus();
   }
 
-  savePosition() {
-    // this.saveToLocalStorage('position', JSON.stringify({ scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY }));
-    // this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
-  }
-
   redraw() {
     console.log('redraw base');
   }
