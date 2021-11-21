@@ -1,0 +1,13 @@
+<template name="home">
+
+    <div class="page">
+      <h1>Infinite Canvas</h1>
+      <div class="login">{{> loginButtons}}</div>
+      
+      <button class="js-insert-book">Create a new book</button>
+      {{#each books}}
+        <div>Book</div>
+      {{/each}}
+    </div>
+
+</template>

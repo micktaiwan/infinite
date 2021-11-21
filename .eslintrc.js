@@ -41,6 +41,7 @@ module.exports = {
     'operator-linebreak': ['error', 'after'],
   },
   globals: {
-
+    FlowRouter: 'writable',
+    BlazeLayout: 'writable',
   },
 };
