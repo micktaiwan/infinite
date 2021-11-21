@@ -1,7 +1,8 @@
 export default class Layer {
-  constructor(manager, index) {
+  constructor(manager, index, bookId) {
     this.manager = manager;
     this.index = index;
+    this.bookId = bookId;
 
     this.canvas = document.createElement('canvas');
     // this.canvas.style.zIndex = index + 1;

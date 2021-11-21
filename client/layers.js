@@ -1,9 +1,12 @@
+import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
 import LayerManager from './layerManager';
 
 import './layers.html';
 
 Template.layers.onRendered(function () {
-  this.manager = new LayerManager();
+  const bookId = FlowRouter.getParam('_id');
+  this.manager = new LayerManager(bookId);
+  this.subscribe('lines', bookId);
   Session.set('layers', this.manager.getLayers());
   Session.set('activeLayer', 0);
 });

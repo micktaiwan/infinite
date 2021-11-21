@@ -1,9 +1,10 @@
 import Layer from './layer';
+import { Lines } from '../imports/api/books/collections';
 
 export default class BoardLayer extends Layer {
-  constructor(board, index) {
-    super(board, index);
-    this.drawings = [];
+  constructor(board, index, bookId) {
+    super(board, index, bookId);
+    // this.drawings = [];
     this.lines = [];
 
     this.scale = 1;
@@ -22,35 +23,47 @@ export default class BoardLayer extends Layer {
     this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), false);
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
 
-    const self = this;
-    this.dbRequest = this.manager.idb.open('infinite-db', 1);
-    this.dbRequest.onsuccess = () => {
-      self.db = self.dbRequest.result;
-      const objectStore = self.db.transaction('infinite-db').objectStore('infinite-db');
-      objectStore.openCursor().onsuccess = function (event) {
-        const cursor = event.target.result;
-        if (cursor) {
-          // console.log('cursor', cursor.key);
-          // populate drawings
-          if (cursor.key === `drawings-${self.index}`) {
-            self.drawings = cursor.value;
-          } else if (cursor.key === `position-${self.index}`) {
-            self.offsetX = cursor.value.offsetX;
-            self.offsetY = cursor.value.offsetY;
-            self.scale = cursor.value.scale;
-          }
-          self.redraw();
-          cursor.continue();
-        }
-      };
-    };
+    Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
+      added: (id, line) => {
+        this.redraw();
+      },
+      changed: (id, line) => {
+        this.redraw();
+      },
+      removed: id => {
+        this.redraw();
+      },
+    });
 
-    this.dbRequest.onupgradeneeded = function (event) {
-      console.log('onupgradeneeded');
-      const db = event.target.result;
-      db.onerror = function (e) { console.log(e); };
-      db.createObjectStore('infinite-db');
-    };
+    // const self = this;
+    // this.dbRequest = this.manager.idb.open('infinite-db', 1);
+    // this.dbRequest.onsuccess = () => {
+    //   self.db = self.dbRequest.result;
+    //   const objectStore = self.db.transaction('infinite-db').objectStore('infinite-db');
+    //   objectStore.openCursor().onsuccess = function (event) {
+    //     const cursor = event.target.result;
+    //     if (cursor) {
+    //       // console.log('cursor', cursor.key);
+    //       // populate drawings
+    //       if (cursor.key === `drawings-${self.index}`) {
+    //         self.drawings = cursor.value;
+    //       } else if (cursor.key === `position-${self.index}`) {
+    //         self.offsetX = cursor.value.offsetX;
+    //         self.offsetY = cursor.value.offsetY;
+    //         self.scale = cursor.value.scale;
+    //       }
+    //       self.redraw();
+    //       cursor.continue();
+    //     }
+    //   };
+    // };
+
+    // this.dbRequest.onupgradeneeded = function (event) {
+    //   console.log('onupgradeneeded');
+    //   const db = event.target.result;
+    //   db.onerror = function (e) { console.log(e); };
+    //   db.createObjectStore('infinite-db');
+    // };
   }
 
   onKeyDown(event) {
@@ -122,27 +135,27 @@ export default class BoardLayer extends Layer {
     // if (event.pressure < 0.1) return;
 
     if (this.eraser) {
-      this.drawEraser(this.cursorX, this.cursorY);
-      let nb = 0;
-      for (let i = 0; i < this.drawings.length; i++) {
-        // console.log('eraser', this.drawings.length);
-        const drawing = this.drawings[i];
-        for (let j = 0; j < drawing.length; j++) {
-          const line = drawing[j];
-          if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
-            this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
-            drawing.splice(j, 1);
-            j--;
-            // TODO: split into 2 drawings if needed
-          }
-          if (drawing.length === 0) {
-            this.drawings.splice(i, 1);
-            i--;
-            nb++;
-          }
-        }
-      }
-      if (nb && !this.drawings.length) this.reset(false);
+      // this.drawEraser(this.cursorX, this.cursorY);
+      // let nb = 0;
+      // for (let i = 0; i < this.drawings.length; i++) {
+      //   // console.log('eraser', this.drawings.length);
+      //   const drawing = this.drawings[i];
+      //   for (let j = 0; j < drawing.length; j++) {
+      //     const line = drawing[j];
+      //     if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
+      //       this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
+      //       drawing.splice(j, 1);
+      //       j--;
+      //       // TODO: split into 2 drawings if needed
+      //     }
+      //     if (drawing.length === 0) {
+      //       this.drawings.splice(i, 1);
+      //       i--;
+      //       nb++;
+      //     }
+      //   }
+      // }
+      // if (nb && !this.drawings.length) this.reset(false);
       return;
     }
 
@@ -239,11 +252,9 @@ export default class BoardLayer extends Layer {
     return this.canvas.clientWidth / this.scale;
   }
 
-  drawSLine(index) {
-    const segment = this.drawings[index];
-
-    for (let j = 0; j < segment.length; j++) {
-      const line = segment[j];
+  drawSLine(segment) {
+    for (let j = 0; j < segment.lines.length; j++) {
+      const line = segment.lines[j];
       const ratio = this.scale / line.scale;
       if (ratio > 0.005 && ratio < 400) {
         this.drawLine(
@@ -261,15 +272,13 @@ export default class BoardLayer extends Layer {
     }
   }
 
-  drawPath(index) {
-    const segment = this.drawings[index];
-
+  drawPath(segment) {
     // this.ctx.lineWidth = line.pressure * ratio;
     this.ctx.beginPath();
-    this.ctx.moveTo(this.toScreenX(segment[0].x0), this.toScreenY(segment[0].y0));
+    this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
 
-    for (let j = 0; j < segment.length; j++) {
-      const line = segment[j];
+    for (let j = 0; j < segment.lines.length; j++) {
+      const line = segment.lines[j];
       const ratio = this.scale / line.scale;
       if (ratio > 0.005 && ratio < 400) {
         this.ctx.strokeStyle = this.color;
@@ -389,9 +398,10 @@ export default class BoardLayer extends Layer {
     if (this.lines.length) forceSave = true;
     if (forceSave) {
       this.forceSave = false;
-      this.drawings.push(this.lines);
+      // this.drawings.push(this.lines);
       // this.toSVG(this.lines);
-      this.saveToIndexedDB('drawings', this.drawings);
+      // this.saveToIndexedDB('drawings', this.drawings);
+      Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
     }
     this.lines = [];
   }
@@ -406,7 +416,7 @@ export default class BoardLayer extends Layer {
   }
 
   clear() {
-    this.drawings = [];
+    // this.drawings = [];
     this.reset();
   }
 
@@ -473,9 +483,9 @@ export default class BoardLayer extends Layer {
   }
 
   undo() {
-    const one = this.drawings.pop();
-    if (one && !this.drawings.length) this.reset(false);
-    this.redraw();
+    // const one = this.drawings.pop();
+    // if (one && !this.drawings.length) this.reset(false);
+    // this.redraw();
   }
 
   draw() {
@@ -484,19 +494,11 @@ export default class BoardLayer extends Layer {
     const self = this;
     self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
-    for (let i = 0; i < self.drawings.length; i++) {
-      // console.log('drawing', self.drawings.length, i);
-      const line = self.drawings[i][0];
-      if (!line) {
-        self.drawings.splice(i, 1);
-        i--;
-        console.log('cleaned');
-      } else {
-        const ratio = self.scale / line.scale;
-        if (self.notDrawing() || ratio > 2) self.drawPath(i);
-        else self.drawSLine(i);
-      }
-    }
+    Lines.find().forEach(line => {
+      const ratio = self.scale / line.scale;
+      if (self.notDrawing() || ratio > 2) self.drawPath(line);
+      else self.drawSLine(line);
+    });
 
     self.redrawing = false;
     // console.log(new Date() - before);
@@ -505,7 +507,7 @@ export default class BoardLayer extends Layer {
   redraw() {
     if (this.redrawing) return;
     this.redrawing = true;
-    console.log('redraw board', this.index, this.drawings.length);
+    console.log('redraw board', this.index, Lines.find().count());
     // const before = new Date();
 
     // this.draw();

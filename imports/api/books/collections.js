@@ -1,5 +1,6 @@
 import { Mongo } from 'meteor/mongo';
 
 const Books = new Mongo.Collection('books');
+const Lines = new Mongo.Collection('lines');
 
-export default Books;
+export { Books, Lines };

@@ -9,7 +9,9 @@ if (module.hot) {
   module.hot.decline();
 }
 export default class LayerManager {
-  constructor() {
+  constructor(bookId) {
+    console.log('LayerManager: constructor', bookId);
+    this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
     this.prevCursorX = 0;
@@ -20,7 +22,7 @@ export default class LayerManager {
     this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     this.layers = [];
     this.selectionLayer = new SelectionLayer(this, -1);
-    this.layers.push(new BoardLayer(this, 0));
+    this.layers.push(new BoardLayer(this, 0, this.bookId));
     this.currentLayer = 0;
 
     // disable right clicking
@@ -54,7 +56,7 @@ export default class LayerManager {
   addLayer() {
     this.dimOpacityForAllLayers();
     this.currentLayer = this.layers.length; // add one
-    this.layers.push(new BoardLayer(this, this.currentLayer));
+    this.layers.push(new BoardLayer(this, this.currentLayer, this.bookId));
     this.focusCurrentLayer();
   }
 

@@ -1,4 +1,5 @@
 import Layer from './layer';
+import { Lines } from '../imports/api/books/collections';
 
 export default class SelectionLayer extends Layer {
   constructor(manager, index) {
@@ -19,8 +20,8 @@ export default class SelectionLayer extends Layer {
     this.selCtx.fillText('Scale', 10, 10);
     this.selCtx.fillText(this.scale, 90, 10);
     this.selCtx.fillText('Lines', 10, 25);
-    this.selCtx.fillText(this.drawings.length, 90, 25);
-    this.selCtx.fillText('Size', 10, 40);
-    this.selCtx.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
+    this.selCtx.fillText(Lines.find().count(), 90, 25);
+    // this.selCtx.fillText('Size', 10, 40);
+    // this.selCtx.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
   }
 }

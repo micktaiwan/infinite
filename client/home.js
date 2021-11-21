@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import './home.html';
-import Books from '../imports/api/books/collections';
+import { Books } from '../imports/api/books/collections';
 
 Template.home.onCreated(function () {
   this.subscribe('books');
