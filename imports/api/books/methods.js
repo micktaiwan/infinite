@@ -35,6 +35,17 @@ Meteor.methods({
     }
   },
 
+  updateLinesBatch(changes) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    changes.forEach(({ id, lines }) => {
+      if (lines.length === 0) {
+        Lines.remove(id);
+      } else {
+        Lines.update(id, { $set: { lines } });
+      }
+    });
+  },
+
   addLayer(bookId, index) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     Layers.insert({ bookId, index, userId: this.userId });

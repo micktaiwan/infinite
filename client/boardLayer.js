@@ -6,12 +6,13 @@ export default class BoardLayer extends Layer {
     super(board, index, bookId);
     // this.drawings = [];
     this.lines = [];
+    this.userId = Meteor.userId();
 
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
     if (positions) {
-      const p = positions[Meteor.userId()];
+      const p = positions[this.userId];
       if (!p) return;
       this.scale = p.scale;
       this.offsetX = p.offsetX;
@@ -32,17 +33,20 @@ export default class BoardLayer extends Layer {
     this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), false);
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
 
+    this.initializing = true;
+    const self = this;
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
       added: (id, line) => {
-        this.redraw();
+        if (self.initializing || line.userId !== self.userId) self.redraw(true);
       },
       changed: (id, line) => {
-        // this.redraw();
+        this.redraw(true);
       },
       removed: id => {
-        this.redraw();
+        this.redraw(true);
       },
     });
+    this.initializing = false;
 
     // const self = this;
     // this.dbRequest = this.manager.idb.open('infinite-db', 1);
@@ -145,7 +149,7 @@ export default class BoardLayer extends Layer {
 
     if (this.eraser) {
       this.drawEraser(this.cursorX, this.cursorY);
-      const nb = 0;
+      const changes = [];
       Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(entry => {
         // console.log('eraser', this.drawings.length);
         let changed = false;
@@ -157,6 +161,7 @@ export default class BoardLayer extends Layer {
             lines.splice(j, 1);
             j--;
             changed = true;
+
             // TODO: split into 2 drawings if needed
           }
           // if (drawing.length === 0) {
@@ -166,10 +171,15 @@ export default class BoardLayer extends Layer {
           // }
         }
         if (changed) {
-          Meteor.call('updateLines', entry._id, lines);
+          changes.push({ id: entry._id, lines });
+          // console.log('eraser', entry._id, lines.length);
         }
       });
-      if (nb && !this.drawings.length) this.reset(false);
+      if (changes.length > 0) {
+        // console.log('changes', changes.length);
+        Meteor.call('updateLinesBatch', changes);
+      }
+      // if (changes.length && !Lines.length) this.reset(false);
       return;
     }
 
@@ -291,6 +301,8 @@ export default class BoardLayer extends Layer {
     // this.ctx.lineWidth = line.pressure * ratio;
     this.ctx.beginPath();
     this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
+    this.ctx.lineTo(this.toScreenX(segment.lines[0].x1), this.toScreenY(segment.lines[0].y1));
+    this.ctx.stroke();
 
     for (let j = 1; j < segment.lines.length; j++) {
       const line = segment.lines[j];
@@ -417,9 +429,12 @@ export default class BoardLayer extends Layer {
       // this.drawings.push(this.lines);
       // this.toSVG(this.lines);
       // this.saveToIndexedDB('drawings', this.drawings);
-      Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
+      const self = this;
+      Meteor.defer(() => {
+        Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
+        this.lines = [];
+      });
     }
-    this.lines = [];
   }
 
   reset(redraw = true) {
@@ -506,7 +521,6 @@ export default class BoardLayer extends Layer {
 
   draw() {
     // console.log('draw');
-    // self.ctx.fillStyle = '#fff';
     const self = this;
     self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
@@ -515,18 +529,17 @@ export default class BoardLayer extends Layer {
       if (self.notDrawing() || ratio > 2) self.drawPath(line);
       else self.drawSLine(line);
     });
-
-    self.redrawing = false;
-    // console.log(new Date() - before);
   }
 
-  redraw() {
-    if (this.redrawing) return;
-    this.redrawing = true;
-    // console.log('redraw board', this.index, Lines.find().count());
-    // const before = new Date();
-
+  redraw(timeout = false) {
     // this.draw();
-    requestAnimationFrame(this.draw.bind(this));
+    const self = this;
+    if (!timeout) requestAnimationFrame(self.draw.bind(self));
+    else {
+      if (this.drawHandle) Meteor.clearTimeout(this.drawHandle);
+      this.drawHandle = Meteor.setTimeout(() => {
+        requestAnimationFrame(self.draw.bind(self));
+      }, 200);
+    }
   }
 }
