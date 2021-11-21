@@ -28,7 +28,6 @@ Template.layers.helpers({
     return Session.get('layers');
   },
   active(index) {
-    console.log('active', index);
     return index === Session.get('activeLayer') ? 'active' : '';
   },
 });
@@ -40,7 +39,6 @@ Template.layers.events({
   // },
   'click .js-focus-layer'(e, tpl) {
     const index = +this;
-    console.log('focus', index);
     tpl.manager.focus(index);
     Session.set('activeLayer', index);
   },

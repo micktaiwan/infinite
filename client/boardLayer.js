@@ -30,7 +30,7 @@ export default class BoardLayer extends Layer {
       objectStore.openCursor().onsuccess = function (event) {
         const cursor = event.target.result;
         if (cursor) {
-          console.log('cursor', cursor.key);
+          // console.log('cursor', cursor.key);
           // populate drawings
           if (cursor.key === `drawings-${self.index}`) {
             self.drawings = cursor.value;
@@ -123,22 +123,26 @@ export default class BoardLayer extends Layer {
 
     if (this.eraser) {
       this.drawEraser(this.cursorX, this.cursorY);
+      let nb = 0;
       for (let i = 0; i < this.drawings.length; i++) {
-        const path = this.drawings[i];
-        for (let j = 0; j < path.length; j++) {
-          const line = path[j];
+        // console.log('eraser', this.drawings.length);
+        const drawing = this.drawings[i];
+        for (let j = 0; j < drawing.length; j++) {
+          const line = drawing[j];
           if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
             this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
-            path.splice(j, 1);
+            drawing.splice(j, 1);
             j--;
+            // TODO: split into 2 drawings if needed
           }
-          if (path.length === 0) {
+          if (drawing.length === 0) {
             this.drawings.splice(i, 1);
             i--;
+            nb++;
           }
         }
       }
-      // this.redraw();
+      if (nb && !this.drawings.length) this.reset(false);
       return;
     }
 
@@ -392,11 +396,12 @@ export default class BoardLayer extends Layer {
     this.lines = [];
   }
 
-  reset() {
+  reset(redraw = true) {
+    console.log('reset');
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
-    this.redraw();
+    if (redraw) this.redraw();
     this.savePosition();
   }
 
@@ -468,38 +473,42 @@ export default class BoardLayer extends Layer {
   }
 
   undo() {
-    this.drawings.pop();
+    const one = this.drawings.pop();
+    if (one && !this.drawings.length) this.reset(false);
     this.redraw();
   }
 
-  redraw(sync = false) {
+  draw() {
+    console.log('draw');
+    // self.ctx.fillStyle = '#fff';
+    const self = this;
+    self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
+
+    for (let i = 0; i < self.drawings.length; i++) {
+      // console.log('drawing', self.drawings.length, i);
+      const line = self.drawings[i][0];
+      if (!line) {
+        self.drawings.splice(i, 1);
+        i--;
+        console.log('cleaned');
+      } else {
+        const ratio = self.scale / line.scale;
+        if (self.notDrawing() || ratio > 2) self.drawPath(i);
+        else self.drawSLine(i);
+      }
+    }
+
+    self.redrawing = false;
+    // console.log(new Date() - before);
+  }
+
+  redraw() {
     if (this.redrawing) return;
     this.redrawing = true;
-    console.log('redraw board', sync);
+    console.log('redraw board', this.index, this.drawings.length);
     // const before = new Date();
 
-    const self = this;
-    const draw = function () {
-      // self.ctx.fillStyle = '#fff';
-      self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
-
-      for (let i = 0; i < self.drawings.length; i++) {
-        const line = self.drawings[i][0];
-        if (!line) {
-          self.drawings.splice(i, 1);
-          i--;
-          console.log('cleaned');
-        } else {
-          const ratio = self.scale / line.scale;
-          if (self.notDrawing() || ratio > 2) self.drawPath(i);
-          else self.drawSLine(i);
-        }
-      }
-
-      self.redrawing = false;
-      // console.log(new Date() - before);
-    };
-    if (sync) draw();
-    else requestAnimationFrame(draw);
+    this.draw();
+    // requestAnimationFrame(this.draw.bind(this));
   }
 }
