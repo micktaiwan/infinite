@@ -1,3 +1,3 @@
 import Books from './collections';
 
-Meteor.publish('books', () => Books.find({ userIds: this.userId }));
+Meteor.publish('books', function () { return Books.find({ userIds: this.userId }); });
