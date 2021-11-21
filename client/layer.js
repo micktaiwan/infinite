@@ -13,7 +13,7 @@ export default class Layer {
     this.canvas.width = window.innerWidth - 51;
     this.canvas.height = window.innerHeight;
 
-    // this.ctx.lineCap = 'round';
+    this.ctx.lineCap = 'round';
     // this.ctx.lineJoin = 'round';
 
     // distance from origin

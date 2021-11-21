@@ -273,11 +273,12 @@ export default class BoardLayer extends Layer {
   }
 
   drawPath(segment) {
+    if (segment.lines.length === 0) return;
     // this.ctx.lineWidth = line.pressure * ratio;
     this.ctx.beginPath();
     this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
 
-    for (let j = 0; j < segment.lines.length; j++) {
+    for (let j = 1; j < segment.lines.length; j++) {
       const line = segment.lines[j];
       const ratio = this.scale / line.scale;
       if (ratio > 0.005 && ratio < 400) {
@@ -391,7 +392,7 @@ export default class BoardLayer extends Layer {
   }
 
   savePosition() {
-    this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
+    // this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
   }
 
   saveDrawings(forceSave = false) {
@@ -489,12 +490,12 @@ export default class BoardLayer extends Layer {
   }
 
   draw() {
-    console.log('draw');
+    // console.log('draw');
     // self.ctx.fillStyle = '#fff';
     const self = this;
     self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
-    Lines.find().forEach(line => {
+    Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(line => {
       const ratio = self.scale / line.scale;
       if (self.notDrawing() || ratio > 2) self.drawPath(line);
       else self.drawSLine(line);
@@ -507,7 +508,7 @@ export default class BoardLayer extends Layer {
   redraw() {
     if (this.redrawing) return;
     this.redrawing = true;
-    console.log('redraw board', this.index, Lines.find().count());
+    // console.log('redraw board', this.index, Lines.find().count());
     // const before = new Date();
 
     // this.draw();
