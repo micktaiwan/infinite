@@ -1,4 +1,4 @@
-import { Lines, Books } from './collections';
+import { Lines, Books, Layers } from './collections';
 
 Meteor.methods({
   booksInsert() {
@@ -33,6 +33,16 @@ Meteor.methods({
     } else {
       Lines.update(id, { $set: { lines } });
     }
+  },
+
+  addLayer(bookId, index) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    Layers.insert({ bookId, index, userId: this.userId });
+  },
+
+  savePosition(bookId, index, position) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
 
 });

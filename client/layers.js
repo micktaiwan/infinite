@@ -1,5 +1,6 @@
 import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
 import LayerManager from './layerManager';
+import { Layers } from '../imports/api/books/collections';
 
 import './layers.html';
 
@@ -7,13 +8,14 @@ Template.layers.onRendered(function () {
   const bookId = FlowRouter.getParam('_id');
   this.manager = new LayerManager(bookId);
   this.subscribe('lines', bookId);
-  Session.set('layers', this.manager.getLayers());
-  Session.set('activeLayer', 0);
+  this.subscribe('layers', bookId, () => {
+    Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
+  });
 });
 
 Template.layers.helpers({
   layers() {
-    return Session.get('layers');
+    return Layers.find({ bookId: FlowRouter.getParam('_id') });
   },
   active(index) {
     return index === Session.get('activeLayer') ? 'active' : '';
@@ -26,14 +28,12 @@ Template.layers.events({
   //   console.log('focus');
   // },
   'click .js-focus-layer'(e, tpl) {
-    const index = +this;
+    const { index } = this;
     tpl.manager.focus(index);
     Session.set('activeLayer', index);
   },
   'click .js-add-layer'(e, tpl) {
+    Session.set('activeLayer', Layers.find({ bookId: FlowRouter.getParam('_id') }).count());
     tpl.manager.addLayer();
-    const layers = tpl.manager.getLayers();
-    Session.set('layers', layers);
-    Session.set('activeLayer', layers.length - 1);
   },
 });

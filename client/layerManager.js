@@ -2,6 +2,7 @@
 // const Layer = require('./layer');
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
+import { Layers } from '../imports/api/books/collections';
 
 // const imageTracer = require('./lib/imagetracer');
 
@@ -22,11 +23,26 @@ export default class LayerManager {
     this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     this.layers = [];
     this.selectionLayer = new SelectionLayer(this, -1);
-    this.layers.push(new BoardLayer(this, 0, this.bookId));
+    // this.layers.push(new BoardLayer(this, 0, this.bookId));
     this.currentLayer = 0;
 
     // disable right clicking
     document.oncontextmenu = () => false;
+
+    this.initializing = true;
+    const self = this;
+    Layers.find({ bookId: this.bookId }).observeChanges({
+      added: (id, fields) => {
+        console.log('LayerManager: added', id, fields);
+        this.dimOpacityForAllLayers();
+        this.layers.push(new BoardLayer(this, fields.index, this.bookId, fields.positions));
+        if (!self.initializing) {
+          this.currentLayer = fields.index;
+          this.focusCurrentLayer();
+        }
+      },
+    });
+    this.initializing = false;
   }
 
   focusCurrentLayer() {
@@ -55,9 +71,7 @@ export default class LayerManager {
 
   addLayer() {
     this.dimOpacityForAllLayers();
-    this.currentLayer = this.layers.length; // add one
-    this.layers.push(new BoardLayer(this, this.currentLayer, this.bookId));
-    this.focusCurrentLayer();
+    Meteor.call('addLayer', this.bookId, this.layers.length);
   }
 
   getActiveLayer() {

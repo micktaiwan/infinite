@@ -2,12 +2,21 @@ import Layer from './layer';
 import { Lines } from '../imports/api/books/collections';
 
 export default class BoardLayer extends Layer {
-  constructor(board, index, bookId) {
+  constructor(board, index, bookId, positions) {
     super(board, index, bookId);
     // this.drawings = [];
     this.lines = [];
 
     this.scale = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    if (positions) {
+      const p = positions[Meteor.userId()];
+      if (!p) return;
+      this.scale = p.scale;
+      this.offsetX = p.offsetX;
+      this.offsetY = p.offsetY;
+    }
     this.pressure = 2;
     this.eraserSize = 20;
     this.color = '#000';
@@ -193,7 +202,7 @@ export default class BoardLayer extends Layer {
         x1: scaledX,
         y1: scaledY,
         color,
-        type: this.type,
+        // type: this.type,
       });
       this.type = 1;
 
@@ -347,7 +356,7 @@ export default class BoardLayer extends Layer {
       x1: this.toTrueX(this.cursorX),
       y1: this.toTrueY(this.cursorY),
       color: this.color,
-      type: this.type,
+      // type: this.type,
     });
     this.saveDrawings();
     this.redraw();
@@ -398,6 +407,7 @@ export default class BoardLayer extends Layer {
 
   savePosition() {
     // this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
+    Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
   }
 
   saveDrawings(forceSave = false) {
