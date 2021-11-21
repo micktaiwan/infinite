@@ -17,12 +17,22 @@ Meteor.methods({
 
   saveLines({ lines, layerIndex, bookId }) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!lines.length) return;
     Lines.insert({
       bookId,
       layerIndex,
       lines,
       userId: this.userId,
     });
+  },
+
+  updateLines(id, lines) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (lines.length === 0) {
+      Lines.remove(id);
+    } else {
+      Lines.update(id, { $set: { lines } });
+    }
   },
 
 });

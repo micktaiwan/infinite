@@ -28,7 +28,7 @@ export default class BoardLayer extends Layer {
         this.redraw();
       },
       changed: (id, line) => {
-        this.redraw();
+        // this.redraw();
       },
       removed: id => {
         this.redraw();
@@ -135,27 +135,32 @@ export default class BoardLayer extends Layer {
     // if (event.pressure < 0.1) return;
 
     if (this.eraser) {
-      // this.drawEraser(this.cursorX, this.cursorY);
-      // let nb = 0;
-      // for (let i = 0; i < this.drawings.length; i++) {
-      //   // console.log('eraser', this.drawings.length);
-      //   const drawing = this.drawings[i];
-      //   for (let j = 0; j < drawing.length; j++) {
-      //     const line = drawing[j];
-      //     if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
-      //       this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
-      //       drawing.splice(j, 1);
-      //       j--;
-      //       // TODO: split into 2 drawings if needed
-      //     }
-      //     if (drawing.length === 0) {
-      //       this.drawings.splice(i, 1);
-      //       i--;
-      //       nb++;
-      //     }
-      //   }
-      // }
-      // if (nb && !this.drawings.length) this.reset(false);
+      this.drawEraser(this.cursorX, this.cursorY);
+      const nb = 0;
+      Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(entry => {
+        // console.log('eraser', this.drawings.length);
+        let changed = false;
+        const { lines } = entry;
+        for (let j = 0; j < lines.length; j++) {
+          const line = lines[j];
+          if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
+            this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
+            lines.splice(j, 1);
+            j--;
+            changed = true;
+            // TODO: split into 2 drawings if needed
+          }
+          // if (drawing.length === 0) {
+          //   this.drawings.splice(i, 1);
+          //   i--;
+          //   nb++;
+          // }
+        }
+        if (changed) {
+          Meteor.call('updateLines', entry._id, lines);
+        }
+      });
+      if (nb && !this.drawings.length) this.reset(false);
       return;
     }
 
