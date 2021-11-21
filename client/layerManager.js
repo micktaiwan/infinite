@@ -24,7 +24,7 @@ export default class LayerManager {
     this.currentLayer = 0;
 
     // disable right clicking
-    // document.oncontextmenu = () => false;
+    document.oncontextmenu = () => false;
   }
 
   focusCurrentLayer() {
@@ -38,7 +38,7 @@ export default class LayerManager {
   }
 
   focus(index) {
-    console.log('LayerManager', index);
+    console.log('LayerManager: focus', index);
     this.dimOpacityForAllLayers();
     this.layers[this.currentLayer].canvas.style.zIndex = 1;
     this.layers[index].canvas.style.zIndex = 100;

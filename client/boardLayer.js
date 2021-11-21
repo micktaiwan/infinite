@@ -508,7 +508,7 @@ export default class BoardLayer extends Layer {
     console.log('redraw board', this.index, this.drawings.length);
     // const before = new Date();
 
-    this.draw();
-    // requestAnimationFrame(this.draw.bind(this));
+    // this.draw();
+    requestAnimationFrame(this.draw.bind(this));
   }
 }
