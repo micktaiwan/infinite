@@ -43,6 +43,7 @@ export default class BoardLayer extends Layer {
         this.redraw(true);
       },
       removed: id => {
+        if (!Lines.findOne({ bookId: this.bookId, layerIndex: this.index })) this.reset(false);
         this.redraw(true);
       },
     });
