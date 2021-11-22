@@ -4,13 +4,22 @@ import { Layers } from '../imports/api/books/collections';
 
 import './layers.html';
 
+Template.layers.onCreated(function () {
+  this.manager = new LayerManager();
+});
+
 Template.layers.onRendered(function () {
   const bookId = FlowRouter.getParam('_id');
-  this.manager = new LayerManager(bookId);
+  this.manager.init(bookId);
   this.subscribe('lines', bookId);
   this.subscribe('layers', bookId, () => {
     Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
   });
+});
+
+Template.layers.onDestroyed(function () {
+  this.manager.destroy();
+  this.manager = null;
 });
 
 Template.layers.helpers({

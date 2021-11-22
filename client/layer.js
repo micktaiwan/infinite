@@ -27,6 +27,10 @@ export default class Layer {
     window.addEventListener('resize', () => this.redraw());
   }
 
+  destroy() {
+    this.el.removeChild(this.canvas);
+  }
+
   focus() {
     this.canvas.focus();
   }

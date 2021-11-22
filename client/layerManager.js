@@ -1,5 +1,6 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
+import { Random } from 'meteor/random';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../imports/api/books/collections';
@@ -10,8 +11,13 @@ if (module.hot) {
   module.hot.decline();
 }
 export default class LayerManager {
-  constructor(bookId) {
-    console.log('LayerManager: constructor', bookId);
+  constructor() {
+    this.id = Random.id();
+    console.log('LayerManager: constructor', this.id);
+  }
+
+  init(bookId) {
+    console.log('LayerManager: init. bookId:', bookId, 'this.id:', this.id);
     this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
@@ -31,9 +37,10 @@ export default class LayerManager {
 
     this.initializing = true;
     const self = this;
-    Layers.find({ bookId: this.bookId }).observeChanges({
+    this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
       added: (id, fields) => {
-        console.log('LayerManager: added', id, fields);
+        if (this.findLayer(id) > -1) return;
+        console.log('LayerManager: added', id, fields, this.id);
         this.dimOpacityForAllLayers();
         this.layers.push(new BoardLayer(this, fields.index, this.bookId, fields.positions));
         if (!self.initializing) {
@@ -43,6 +50,21 @@ export default class LayerManager {
       },
     });
     this.initializing = false;
+  }
+
+  destroy() {
+    console.log('LayerManager: destroy');
+    this.observeHandle.stop();
+    this.layers.forEach(layer => {
+      layer.destroy();
+    });
+    this.layers = [];
+    this.selectionLayer.destroy();
+    this.selectionLayer = null;
+  }
+
+  findLayer(id) {
+    return this.layers.find(layer => layer.id === id);
   }
 
   focusCurrentLayer() {
