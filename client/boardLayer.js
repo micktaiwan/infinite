@@ -39,12 +39,13 @@ export default class BoardLayer extends Layer {
       added: (id, line) => {
         if (self.initializing || line.userId !== self.userId) self.redraw(true);
       },
-      changed: (id, line) => {
-        this.redraw(true);
+      changed: (id, fields) => {
+        const line = Lines.findOne(id);
+        if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw(true);
       },
       removed: id => {
-        if (!Lines.findOne({ bookId: this.bookId, layerIndex: this.index })) this.reset(false);
-        this.redraw(true);
+        if (!Lines.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
+        if (!self.notDrawingActionInProgress()) self.redraw(true);
       },
     });
     this.initializing = false;
@@ -148,7 +149,7 @@ export default class BoardLayer extends Layer {
 
     // if (event.pressure < 0.1) return;
 
-    if (this.eraser) {
+    if (this.erasing) {
       this.drawEraser(this.cursorX, this.cursorY);
       const changes = [];
       Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(entry => {
@@ -310,7 +311,7 @@ export default class BoardLayer extends Layer {
       const ratio = this.scale / line.scale;
       if (ratio > 0.005 && ratio < 400) {
         this.ctx.strokeStyle = this.color;
-        if (this.notDrawing()) this.ctx.lineWidth = 1;
+        if (this.notDrawingActionInProgress()) this.ctx.lineWidth = 1;
         else this.ctx.lineWidth = line.pressure * ratio;
         this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
         this.ctx.stroke();
@@ -318,8 +319,9 @@ export default class BoardLayer extends Layer {
     }
   }
 
-  notDrawing() {
-    return this.zooming || this.panning;
+  notDrawingActionInProgress() {
+    // console.log(this.zooming, this.panning, this.erasing, this.straightLine, this.rectSelection);
+    return this.zooming || this.panning || this.erasing || this.straightLine || this.rectSelection;
   }
 
   startPan() {
@@ -377,11 +379,11 @@ export default class BoardLayer extends Layer {
   }
 
   startEraser() {
-    this.eraser = true;
+    this.erasing = true;
   }
 
   stopEraser() {
-    this.eraser = false;
+    this.erasing = false;
     this.redraw();
     this.saveDrawings(true);
   }
@@ -526,7 +528,7 @@ export default class BoardLayer extends Layer {
 
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(line => {
       const ratio = self.scale / line.scale;
-      if (self.notDrawing() || ratio > 2) self.drawPath(line);
+      if (self.notDrawingActionInProgress() || ratio > 2) self.drawPath(line);
       else self.drawSLine(line);
     });
   }
@@ -534,7 +536,7 @@ export default class BoardLayer extends Layer {
   redraw(timeout = false) {
     // this.draw();
     const self = this;
-    if (!timeout) requestAnimationFrame(self.draw.bind(self));
+    if (true) requestAnimationFrame(self.draw.bind(self));
     else {
       if (this.drawHandle) Meteor.clearTimeout(this.drawHandle);
       this.drawHandle = Meteor.setTimeout(() => {
