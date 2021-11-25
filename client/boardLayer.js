@@ -90,6 +90,7 @@ export default class BoardLayer extends Layer {
     else if (event.key === '&') this.reset();
     else if (event.key === 'e') this.startEraser();
     else if (event.key === 'd') this.startStraightLine();
+    else if (event.key === 'r') this.startRectangle();
     else if (event.key === 's') this.startRectSelection();
   }
 
@@ -101,6 +102,7 @@ export default class BoardLayer extends Layer {
     else if (event.key === 'a') this.stopZooming();
     else if (event.key === 'e') this.stopEraser();
     else if (event.key === 'd') this.stopStraightLine();
+    else if (event.key === 'r') this.stopRectangle();
     else if (event.key === 's') this.stopRectSelection();
   }
 
@@ -188,6 +190,12 @@ export default class BoardLayer extends Layer {
     if (this.straightLine) {
       this.sel.redraw();
       this.drawLine(this.startX, this.startY, this.cursorX, this.cursorY, 2, this.color, this.selCtx);
+      return;
+    }
+
+    if (this.rectangle) {
+      this.sel.redraw();
+      this.selCtx.strokeRect(this.startX, this.startY, this.cursorX - this.startX, this.cursorY - this.startY);
       return;
     }
 
@@ -372,6 +380,57 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.cursorY),
       color: this.color,
       // type: this.type,
+    });
+    this.saveDrawings();
+    this.redraw();
+    this.sel.redraw();
+  }
+
+  startRectangle() {
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
+    this.rectangle = true;
+    this.selCtx.lineWidth = 2;
+    this.selCtx.strokeStyle = '#000';
+  }
+
+  stopRectangle() {
+    this.rectangle = false;
+    this.lines.push({
+      scale: this.scale,
+      pressure: 2,
+      x0: this.toTrueX(this.startX),
+      y0: this.toTrueY(this.startY),
+      x1: this.toTrueX(this.cursorX),
+      y1: this.toTrueY(this.startY),
+      color: this.color,
+    });
+    this.lines.push({
+      scale: this.scale,
+      pressure: 2,
+      x0: this.toTrueX(this.cursorX),
+      y0: this.toTrueY(this.startY),
+      x1: this.toTrueX(this.cursorX),
+      y1: this.toTrueY(this.cursorY),
+      color: this.color,
+    });
+    this.lines.push({
+      scale: this.scale,
+      pressure: 2,
+      x0: this.toTrueX(this.cursorX),
+      y0: this.toTrueY(this.cursorY),
+      x1: this.toTrueX(this.startX),
+      y1: this.toTrueY(this.cursorY),
+      color: this.color,
+    });
+    this.lines.push({
+      scale: this.scale,
+      pressure: 2,
+      x0: this.toTrueX(this.startX),
+      y0: this.toTrueY(this.cursorY),
+      x1: this.toTrueX(this.startX),
+      y1: this.toTrueY(this.startY),
+      color: this.color,
     });
     this.saveDrawings();
     this.redraw();

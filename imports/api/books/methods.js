@@ -20,7 +20,6 @@ Meteor.methods({
     if (!lines.length) return;
     let order = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
     order++;
-    console.log(Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } }));
     Lines.insert({
       order,
       bookId,
