@@ -9,6 +9,7 @@ module.exports = {
   extends: ['airbnb-base'],
   parserOptions: {
     sourceType: 'module',
+    ecmaVersion: 2020,
   },
   rules: {
     'import/no-unresolved': 0,

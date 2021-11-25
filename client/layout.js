@@ -10,5 +10,5 @@ Template.registerHelper('log', text => console.log(text));
 Template.registerHelper('add', (v, nb) => v + nb);
 
 Template.layout.onCreated(() => {
-  Meteor.call('booksAddUser', FlowRouter.getParam('_id'));
+  Meteor.call('booksAddUser', FlowRouter.getParam('bookId'));
 });

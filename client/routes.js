@@ -3,7 +3,7 @@ import { BlazeLayout } from 'meteor/kadira:blaze-layout';
 
 BlazeLayout.setRoot('body');
 
-FlowRouter.route('/book/:_id', {
+FlowRouter.route('/book/:bookId', {
   name: 'book',
   action(params, queryParams) {
     BlazeLayout.render('layout', { main: 'layers' });

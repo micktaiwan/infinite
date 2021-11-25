@@ -18,12 +18,24 @@ Meteor.methods({
   saveLines({ lines, layerIndex, bookId }) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     if (!lines.length) return;
+    let order = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
+    order++;
+    console.log(Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } }));
     Lines.insert({
+      order,
       bookId,
       layerIndex,
       lines,
       userId: this.userId,
     });
+  },
+
+  undo(bookId, layerIndex) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!bookId) throw new Meteor.Error('no-book-id');
+    const lastLine = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } });
+    if (!lastLine) return;
+    Lines.remove(lastLine._id);
   },
 
   updateLines(id, lines) {

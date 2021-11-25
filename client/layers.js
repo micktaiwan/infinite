@@ -9,7 +9,7 @@ Template.layers.onCreated(function () {
 });
 
 Template.layers.onRendered(function () {
-  const bookId = FlowRouter.getParam('_id');
+  const bookId = FlowRouter.getParam('bookId');
   this.manager.init(bookId);
   this.subscribe('lines', bookId);
   this.subscribe('layers', bookId, () => {
@@ -24,7 +24,7 @@ Template.layers.onDestroyed(function () {
 
 Template.layers.helpers({
   layers() {
-    return Layers.find({ bookId: FlowRouter.getParam('_id') });
+    return Layers.find({ bookId: FlowRouter.getParam('bookId') });
   },
   active(index) {
     return index === Session.get('activeLayer') ? 'active' : '';
@@ -42,7 +42,7 @@ Template.layers.events({
     Session.set('activeLayer', index);
   },
   'click .js-add-layer'(e, tpl) {
-    Session.set('activeLayer', Layers.find({ bookId: FlowRouter.getParam('_id') }).count());
+    Session.set('activeLayer', Layers.find({ bookId: FlowRouter.getParam('bookId') }).count());
     tpl.manager.addLayer();
   },
 });

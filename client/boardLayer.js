@@ -83,7 +83,7 @@ export default class BoardLayer extends Layer {
   onKeyDown(event) {
     if (event.repeat) return;
     // console.log('down', this.index);
-    if (event.key === 'z' && event.metaKey) this.undo();
+    if (event.key === 'z' && (event.metaKey || event.ctrlKey)) this.undo();
     else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
     else if (event.key === '&') this.reset();
@@ -515,9 +515,8 @@ export default class BoardLayer extends Layer {
   }
 
   undo() {
-    // const one = this.drawings.pop();
-    // if (one && !this.drawings.length) this.reset(false);
-    // this.redraw();
+    Meteor.call('undo', this.bookId, this.index);
+    this.redraw();
   }
 
   draw() {
