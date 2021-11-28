@@ -66,5 +66,15 @@ Meteor.methods({
     if (!this.userId) throw new Meteor.Error('not-authorized');
     Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
-
+  stats() {
+    const bookId = this.userId;
+    const lines = Lines.find({ bookId }).count();
+    const layers = Layers.find({ bookId }).count();
+    const stats = {
+      bookId,
+      lines,
+      layers,
+    };
+    return stats;
+  },
 });

@@ -1,14 +1,15 @@
 import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
-import LayerManager from './layerManager';
+import LayerManager from '../imports/classes/layerManager';
 import { Layers } from '../imports/api/books/collections';
 
-import './layers.html';
+import './book.html';
 
-Template.layers.onCreated(function () {
+Template.book.onCreated(function () {
+  Meteor.call('booksAddUser', FlowRouter.getParam('bookId'));
   this.manager = new LayerManager();
 });
 
-Template.layers.onRendered(function () {
+Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
   this.manager.init(bookId);
   this.subscribe('lines', bookId);
@@ -17,12 +18,12 @@ Template.layers.onRendered(function () {
   });
 });
 
-Template.layers.onDestroyed(function () {
+Template.book.onDestroyed(function () {
   this.manager.destroy();
   this.manager = null;
 });
 
-Template.layers.helpers({
+Template.book.helpers({
   layers() {
     return Layers.find({ bookId: FlowRouter.getParam('bookId') });
   },
@@ -31,7 +32,7 @@ Template.layers.helpers({
   },
 });
 
-Template.layers.events({
+Template.book.events({
   // 'mouseenter #layers'(e, tpl) {
   //   tpl.manager.focusCurrentLayer();
   //   console.log('focus');

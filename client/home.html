@@ -1,17 +1,15 @@
 <template name="home">
-
   <div class="page">
     <h1>Infinite Canvas</h1>
     <div class="login">{{> loginButtons}}</div>
 
     <button class="js-insert-book">Create a new book</button>
-    <div class="books">
-      {{#each books}}
-      <a href="/book/{{_id}}">
-        <span class="book">{{title}}</span>
-      </a>
-      {{/each}}
-    </div>
+    <div class="bookCovers">{{#each bookCovers}} {{>bookCover}} {{/each}}</div>
   </div>
+</template>
 
+<template name="bookCover">
+  <a href="/book/{{_id}}">
+    <span class="bookCover">{{title}}</span>
+  </a>
 </template>

@@ -4,10 +4,13 @@ import { Books } from '../imports/api/books/collections';
 
 Template.home.onCreated(function () {
   this.subscribe('books');
+  Meteor.call('stats', (err, res) => {
+    Session.set('stats', res);
+  });
 });
 
 Template.home.helpers({
-  books() { return Books.find({}); },
+  bookCovers() { return Books.find({}); },
 });
 
 Template.home.events({
@@ -15,4 +18,8 @@ Template.home.events({
     if (!Meteor.userId()) { alert('Please log in to add a book'); return; }
     Meteor.call('booksInsert');
   },
+});
+
+Template.bookCover.helpers({
+  stats() { return Session.get('stats'); },
 });

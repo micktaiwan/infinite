@@ -1,4 +1,4 @@
-import Layer from './layer';
+import Layer from '../imports/classes/layer';
 import { Lines } from '../imports/api/books/collections';
 
 export default class BoardLayer extends Layer {
