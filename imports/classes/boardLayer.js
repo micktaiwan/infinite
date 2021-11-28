@@ -156,44 +156,46 @@ export default class BoardLayer extends Layer {
     if (this.erasing) {
       // console.log('erasing');
       this.drawEraser(this.cursorX, this.cursorY);
-
       if (!this.leftMouseDown) return;
 
-      const size = this.pressure * this.eraserSize / 5;
+      const self = this;
+      Meteor.defer(() => {
+        const size = self.pressure * self.eraserSize / 5;
 
-      const changes = [];
-      Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(entry => {
-        // console.log('eraser', this.drawings.length);
-        let changed = false;
-        const { lines } = entry;
-        for (let j = 0; j < lines.length; j++) {
-          const line = lines[j];
-          if (this.dist(line.x0, line.y0, scaledX, scaledY) < size ||
-            this.dist(line.x1, line.y1, scaledX, scaledY) < size) {
-            lines.splice(j, 1);
-            j--;
-            changed = true;
+        const changes = [];
+        Lines.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
+        // console.log('eraser', self.drawings.length);
+          let changed = false;
+          const { lines } = entry;
+          for (let j = 0; j < lines.length; j++) {
+            const line = lines[j];
+            if (self.dist(line.x0, line.y0, scaledX, scaledY) < size ||
+            self.dist(line.x1, line.y1, scaledX, scaledY) < size) {
+              lines.splice(j, 1);
+              j--;
+              changed = true;
 
             // TODO: split into 2 drawings if needed
-          }
+            }
           // if (drawing.length === 0) {
-          //   this.drawings.splice(i, 1);
+          //   self.drawings.splice(i, 1);
           //   i--;
           //   nb++;
           // }
-        }
-        if (changed) {
-          changes.push({ id: entry._id, lines });
+          }
+          if (changed) {
+            changes.push({ id: entry._id, lines });
           // console.log('eraser', entry._id, lines.length);
-        }
-      });
-      if (changes.length > 0) {
+          }
+        });
+        if (changes.length > 0) {
         // console.log('changes', changes.length);
-        Meteor.call('updateLinesBatch', changes);
-      }
-      // if (changes.length && !Lines.length) this.reset(false);
-      this.prevCursorX = this.cursorX;
-      this.prevCursorY = this.cursorY;
+          Meteor.call('updateLinesBatch', changes);
+        }
+        // if (changes.length && !Lines.length) self.reset(false);
+        self.prevCursorX = self.cursorX;
+        self.prevCursorY = self.cursorY;
+      });
 
       return;
     }
