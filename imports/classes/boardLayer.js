@@ -107,7 +107,7 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseWheel(event) {
-    this.zoom(event);
+    this.wheelZoom(event);
   }
 
   onMouseMove(event) {
@@ -128,7 +128,7 @@ export default class BoardLayer extends Layer {
 
     if (this.zooming) {
       if (dist > 5) {
-        this.mouseZoom(event);
+        this.pointerZoom(event);
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
       }
@@ -481,6 +481,7 @@ export default class BoardLayer extends Layer {
 
   savePosition() {
     // this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
+    // console.log('savePosition', this.scale, this.offsetX, this.offsetY);
     Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
   }
 
@@ -500,6 +501,7 @@ export default class BoardLayer extends Layer {
   }
 
   reset(redraw = true) {
+    if (this.destroyed) return;
     console.log('reset');
     this.scale = 1;
     this.offsetX = 0;
@@ -531,7 +533,7 @@ export default class BoardLayer extends Layer {
     this.redraw();
   }
 
-  mouseZoom() {
+  pointerZoom() {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
     // const deltaX = Math.abs(this.startX - this.cursorX);
     const deltaY = Math.abs(this.startY - this.cursorY);
@@ -554,7 +556,7 @@ export default class BoardLayer extends Layer {
     this.redraw();
   }
 
-  zoom(event) {
+  wheelZoom(event) {
     const { deltaY } = event;
     const scaleAmount = -deltaY / 500;
     this.scale *= (1 + scaleAmount);
@@ -573,6 +575,12 @@ export default class BoardLayer extends Layer {
     this.offsetY -= unitsAddTop;
 
     this.redraw();
+
+    const self = this;
+    if (this.wheelZoomTimerHandle) clearTimeout(this.wheelZoomTimerHandle);
+    this.wheelZoomTimerHandle = Meteor.setTimeout(() => {
+      self.savePosition();
+    }, 200);
   }
 
   undo() {

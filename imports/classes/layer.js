@@ -28,6 +28,7 @@ export default class Layer {
   }
 
   destroy() {
+    this.destroyed = true;
     this.el.removeChild(this.canvas);
   }
 

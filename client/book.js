@@ -12,9 +12,14 @@ Template.book.onCreated(function () {
 Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
   this.manager.init(bookId);
-  this.subscribe('lines', bookId);
+  const self = this;
   this.subscribe('layers', bookId, () => {
     Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
+    Meteor.defer(() => {
+      self.subscribe('lines', bookId, () => {
+        self.manager.redraw();
+      });
+    });
   });
 });
 

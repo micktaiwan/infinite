@@ -99,4 +99,10 @@ export default class LayerManager {
   getActiveLayer() {
     return this.currentLayer;
   }
+
+  redraw() {
+    this.layers.forEach(layer => {
+      layer.redraw();
+    });
+  }
 }
