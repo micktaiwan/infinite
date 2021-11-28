@@ -67,14 +67,18 @@ Meteor.methods({
     Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
   stats() {
-    const bookId = this.userId;
-    const lines = Lines.find({ bookId }).count();
-    const layers = Layers.find({ bookId }).count();
-    const stats = {
-      bookId,
-      lines,
-      layers,
-    };
+    const stats = {};
+    Books.find({}).forEach(book => {
+      const bookId = book._id;
+      const lines = Lines.find({ bookId }).count();
+      const layers = Layers.find({ bookId }).count();
+      const segments = Lines.find({ bookId }).map(line => line.lines.length).reduce((a, b) => a + b, 0);
+      stats[bookId] = {
+        layers,
+        lines,
+        segments,
+      };
+    });
     return stats;
   },
 });

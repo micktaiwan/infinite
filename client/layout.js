@@ -1,6 +1,4 @@
 import { Template } from 'meteor/templating';
-import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
-// import { ReactiveVar } from 'meteor/reactive-var';
 import './routes';
 import './home';
 import './book';

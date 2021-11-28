@@ -1,13 +1,18 @@
 <template name="book">
+  <ul id="menu">
+    <li>
+      <button class="js-add-layer"><i class="fas fa-plus"></i></button>
+    </li>
+    {{#each layers}}
+    <li>
+      <button class="{{active index}} js-focus-layer">{{add index 1}}</button>
+    </li>
+    {{/each}}
+  </ul>
 
-    <ul id="menu">
-      <li><button class="js-add-layer"><i class="fas fa-plus"></i></button></li>
-      {{#each layers}}
-        <li><button class="{{active index}} js-focus-layer">{{add index 1}}</button></li>
-      {{/each}}
-    </ul>
-    
-    <div id="layers"></div>
-  
-  </template>
-  
+  <div id="layers"></div>
+
+  {{#unless Template.subscriptionsReady}}
+    <div class="loading">Loading...</div>
+  {{/unless}}
+</template>

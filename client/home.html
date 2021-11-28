@@ -10,6 +10,17 @@
 
 <template name="bookCover">
   <a href="/book/{{_id}}">
-    <span class="bookCover">{{title}}</span>
+    <span class="bookCover">
+      <div>
+        <div class="title">{{title}}</div>
+        {{#with stats _id}}
+        <div class="stats">
+          <div class="stat">{{layers}} layers</div>
+          <div class="stat">{{lines}} lines</div>
+          <div class="stat">{{segments}} segments</div>
+        </div>
+        {{/with}}
+      </div>
+    </span>
   </a>
 </template>
