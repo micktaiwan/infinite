@@ -1,5 +1,5 @@
-import Layer from '../imports/classes/layer';
-import { Lines } from '../imports/api/books/collections';
+import Layer from './layer';
+import { Lines } from '../api/books/collections';
 
 export default class SelectionLayer extends Layer {
   constructor(manager, index) {

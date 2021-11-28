@@ -1,8 +1,8 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
 import { Random } from 'meteor/random';
-import SelectionLayer from '../../client/selectionLayer';
-import BoardLayer from '../../client/boardLayer';
+import SelectionLayer from './selectionLayer';
+import BoardLayer from './boardLayer';
 import { Layers } from '../api/books/collections';
 
 // const imageTracer = require('./lib/imagetracer');

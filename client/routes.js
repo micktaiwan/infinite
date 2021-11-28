@@ -6,7 +6,7 @@ BlazeLayout.setRoot('body');
 FlowRouter.route('/book/:bookId', {
   name: 'book',
   action(params, queryParams) {
-    BlazeLayout.render('layout', { main: 'layers' });
+    BlazeLayout.render('layout', { main: 'book' });
   },
 });
 
