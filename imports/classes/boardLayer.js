@@ -111,11 +111,13 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseMove(event) {
-    // console.log('move', this.index);
-
     // get mouse position
     this.cursorX = event.clientX - 50;
     this.cursorY = event.clientY;
+
+    // with a pointer, move is triggered also with a tilt
+    if (this.cursorX === this.prevCursorX && this.cursorY === this.prevCursorY) return;
+    // console.log('move', this.index);
 
     const scaledX = this.toTrueX(this.cursorX);
     const scaledY = this.toTrueY(this.cursorY);
@@ -152,7 +154,13 @@ export default class BoardLayer extends Layer {
     // if (event.pressure < 0.1) return;
 
     if (this.erasing) {
+      // console.log('erasing');
       this.drawEraser(this.cursorX, this.cursorY);
+
+      if (!this.leftMouseDown) return;
+
+      const size = this.pressure * this.eraserSize / 5;
+
       const changes = [];
       Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(entry => {
         // console.log('eraser', this.drawings.length);
@@ -160,8 +168,8 @@ export default class BoardLayer extends Layer {
         const { lines } = entry;
         for (let j = 0; j < lines.length; j++) {
           const line = lines[j];
-          if (this.dist(line.x0, line.y0, scaledX, scaledY) < this.eraserSize ||
-            this.dist(line.x1, line.y1, scaledX, scaledY) < this.eraserSize) {
+          if (this.dist(line.x0, line.y0, scaledX, scaledY) < size ||
+            this.dist(line.x1, line.y1, scaledX, scaledY) < size) {
             lines.splice(j, 1);
             j--;
             changed = true;
@@ -184,6 +192,9 @@ export default class BoardLayer extends Layer {
         Meteor.call('updateLinesBatch', changes);
       }
       // if (changes.length && !Lines.length) this.reset(false);
+      this.prevCursorX = this.cursorX;
+      this.prevCursorY = this.cursorY;
+
       return;
     }
 
@@ -230,9 +241,10 @@ export default class BoardLayer extends Layer {
       this.drawLine(this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY, this.pressure, color);
 
       // console.log('move',cursorX, cursorY);
-      this.prevCursorX = this.cursorX;
-      this.prevCursorY = this.cursorY;
     }
+
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
   }
 
   onMouseDown(event) {
@@ -443,6 +455,7 @@ export default class BoardLayer extends Layer {
 
   stopEraser() {
     this.erasing = false;
+    this.sel.redraw();
     this.redraw();
     this.saveDrawings(true);
   }
@@ -520,11 +533,22 @@ export default class BoardLayer extends Layer {
   }
 
   drawEraser(x, y) {
-    this.ctx.fillStyle = '#fff';
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, this.eraserSize, 0, 2 * Math.PI);
-    this.ctx.fill();
-    this.ctx.closePath();
+    const size = this.pressure * this.eraserSize / 5;
+    if (!this.leftMouseDown) {
+      this.sel.redraw();
+      this.selCtx.strokeStyle = '#555';
+      this.selCtx.beginPath();
+      this.selCtx.arc(x, y, this.eraserSize, 0, 2 * Math.PI);
+      this.selCtx.stroke();
+      this.selCtx.closePath();
+    } else {
+      this.sel.redraw();
+      this.ctx.fillStyle = '#fff';
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, size, 0, 2 * Math.PI);
+      this.ctx.fill();
+      this.ctx.closePath();
+    }
   }
 
   zoomStep(step) {
