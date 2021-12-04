@@ -208,6 +208,7 @@ export default class BoardLayer extends Layer {
 
     if (this.rectangle) {
       this.sel.redraw();
+      this.selCtx.strokeStyle = '#000';
       this.selCtx.strokeRect(this.startX, this.startY, this.cursorX - this.startX, this.cursorY - this.startY);
       return;
     }
@@ -447,8 +448,8 @@ export default class BoardLayer extends Layer {
       color: this.color,
     });
     this.saveDrawings();
-    this.redraw();
     this.sel.redraw();
+    this.redraw();
   }
 
   startEraser() {
@@ -457,9 +458,9 @@ export default class BoardLayer extends Layer {
 
   stopEraser() {
     this.erasing = false;
+    this.saveDrawings(true);
     this.sel.redraw();
     this.redraw();
-    this.saveDrawings(true);
   }
 
   startRectSelection() {
@@ -508,10 +509,8 @@ export default class BoardLayer extends Layer {
       // this.toSVG(this.lines);
       // this.saveToIndexedDB('drawings', this.drawings);
       const self = this;
-      Meteor.defer(() => {
-        Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
-        this.lines = [];
-      });
+      Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
+      this.lines = [];
     }
   }
 
