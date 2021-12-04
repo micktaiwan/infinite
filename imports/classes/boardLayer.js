@@ -11,7 +11,6 @@ export default class BoardLayer extends Layer {
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
-    console.log(fields);
     this.hidden = fields.hidden;
     if (fields.positions) {
       const p = fields.positions[this.userId];
@@ -21,7 +20,7 @@ export default class BoardLayer extends Layer {
       this.offsetY = p.offsetY;
     }
     this.pressure = 2;
-    this.eraserSize = 20;
+    this.eraserSize = 40;
     this.color = '#000';
 
     this.sel = this.manager.selectionLayer;
@@ -167,7 +166,7 @@ export default class BoardLayer extends Layer {
 
       const self = this;
       Meteor.defer(() => {
-        const size = self.pressure * self.eraserSize / 5;
+        const size = self.pressure * self.eraserSize / 3;
 
         const changes = [];
         Lines.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
@@ -545,7 +544,7 @@ export default class BoardLayer extends Layer {
   }
 
   drawEraser(x, y) {
-    const size = this.pressure * this.eraserSize / 5;
+    const size = this.pressure / 3 * this.eraserSize;
     if (!this.leftMouseDown) {
       this.sel.redraw();
       this.selCtx.strokeStyle = '#555';
