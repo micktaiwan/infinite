@@ -38,12 +38,12 @@ export default class LayerManager {
     this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
       added: (id, fields) => {
         if (this.findLayer(id) > -1) { console.log('why?'); return; }
-        console.log('LayerManager: added', id, fields, this.id);
+        // console.log('LayerManager: added', id, fields);
         this.dimOpacityForAllLayers();
         this.layers.push(new BoardLayer(this, id, fields));
         if (!self.initializing) {
-          this.currentLayer = fields.index;
-          this.focusCurrentLayer();
+          self.currentLayer = fields.index;
+          self.focusCurrentLayer();
         }
       },
     });
