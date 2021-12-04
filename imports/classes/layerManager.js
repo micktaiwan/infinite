@@ -40,10 +40,7 @@ export default class LayerManager {
         // console.log('LayerManager: added', id, fields);
         self.dimOpacityForAllLayers();
         self.layers.push(new BoardLayer(self, _id, fields));
-        if (!self.initializing) {
-          self.focus(fields.index);
-          console.log('LayerManager: added. currentLayer:', self.currentLayer);
-        }
+        if (!self.initializing) self.focus(fields.index);
       },
       removed: _id => {
         const layer = self.findLayer(_id);
