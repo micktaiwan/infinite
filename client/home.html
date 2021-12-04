@@ -1,5 +1,9 @@
 <template name="home">
   <div class="page">
+    {{#unless Template.subscriptionsReady}}
+      {{> loading}}
+    {{/unless}}
+
     <h1>Infinite Canvas</h1>
     <div class="login">{{> loginButtons}}</div>
 
