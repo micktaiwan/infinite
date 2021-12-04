@@ -81,4 +81,8 @@ Meteor.methods({
     });
     return stats;
   },
+  toggleLayer(id, hidden) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    Layers.update(id, { $set: { hidden } });
+  },
 });

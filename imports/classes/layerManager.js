@@ -13,11 +13,10 @@ if (module.hot) {
 export default class LayerManager {
   constructor() {
     this.id = Random.id();
-    console.log('LayerManager: constructor', this.id);
   }
 
   init(bookId) {
-    console.log('LayerManager: init. bookId:', bookId, 'this.id:', this.id);
+    // console.log('LayerManager: init. bookId:', bookId, 'this.id:', this.id);
     this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
@@ -28,8 +27,7 @@ export default class LayerManager {
 
     this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     this.layers = [];
-    this.selectionLayer = new SelectionLayer(this, -1);
-    // this.layers.push(new BoardLayer(this, 0, this.bookId));
+    this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
 
     // disable right clicking
@@ -39,10 +37,10 @@ export default class LayerManager {
     const self = this;
     this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
       added: (id, fields) => {
-        if (this.findLayer(id) > -1) return;
+        if (this.findLayer(id) > -1) { console.log('why?'); return; }
         console.log('LayerManager: added', id, fields, this.id);
         this.dimOpacityForAllLayers();
-        this.layers.push(new BoardLayer(this, fields.index, this.bookId, fields.positions));
+        this.layers.push(new BoardLayer(this, id, fields));
         if (!self.initializing) {
           this.currentLayer = fields.index;
           this.focusCurrentLayer();
@@ -50,6 +48,12 @@ export default class LayerManager {
       },
     });
     this.initializing = false;
+  }
+
+  toggleLayer() {
+    this.layers[this.currentLayer].hidden = !this.layers[this.currentLayer].hidden;
+    Meteor.call('toggleLayer', this.layers[this.currentLayer]._id, this.layers[this.currentLayer].hidden);
+    this.redraw();
   }
 
   destroy() {
@@ -85,6 +89,7 @@ export default class LayerManager {
     this.layers[index].canvas.style.opacity = 1;
     this.currentLayer = index;
     this.focusCurrentLayer();
+    if (this.layers[index].hidden) this.toggleLayer(index);
   }
 
   getLayers() {

@@ -2,8 +2,8 @@ import Layer from './layer';
 import { Lines } from '../api/books/collections';
 
 export default class BoardLayer extends Layer {
-  constructor(board, index, bookId, positions) {
-    super(board, index, bookId);
+  constructor(manager, _id, fields) {
+    super(manager, _id, fields);
     // this.drawings = [];
     this.lines = [];
     this.userId = Meteor.userId();
@@ -11,8 +11,10 @@ export default class BoardLayer extends Layer {
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
-    if (positions) {
-      const p = positions[this.userId];
+    console.log(fields);
+    this.hidden = fields.hidden;
+    if (fields.positions) {
+      const p = fields.positions[this.userId];
       if (!p) return;
       this.scale = p.scale;
       this.offsetX = p.offsetX;
@@ -39,7 +41,7 @@ export default class BoardLayer extends Layer {
       added: (id, line) => {
         if (self.initializing || line.userId !== self.userId) self.redraw(true);
       },
-      changed: (id, fields) => {
+      changed: (id, xfields) => {
         const line = Lines.findOne(id);
         if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw(true);
       },
@@ -82,6 +84,7 @@ export default class BoardLayer extends Layer {
   }
 
   onKeyDown(event) {
+    if (this.hidden) return;
     if (event.repeat) return;
     // console.log('down', this.index);
     if (event.key === 'z' && (event.metaKey || event.ctrlKey)) this.undo();
@@ -95,6 +98,7 @@ export default class BoardLayer extends Layer {
   }
 
   onKeyUp(event) {
+    if (this.hidden) return;
     if (event.repeat) return;
     // console.log('up', event);
     if (event.key === 'z') this.stopPan();
@@ -107,10 +111,13 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseWheel(event) {
+    if (this.hidden) return;
     this.wheelZoom(event);
   }
 
   onMouseMove(event) {
+    if (this.hidden) return;
+
     // get mouse position
     this.cursorX = event.clientX - 50;
     this.cursorY = event.clientY;
@@ -251,6 +258,8 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseDown(event) {
+    if (this.hidden) return;
+
     this.updateCursorPos(event);
     this.lines = [];
 
@@ -270,6 +279,8 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseUp() {
+    if (this.hidden) return;
+
     if (this.panning) this.stopPan();
     this.saveDrawings();
     this.leftMouseDown = false;
@@ -614,26 +625,19 @@ export default class BoardLayer extends Layer {
   }
 
   draw() {
-    // console.log('draw');
-    const self = this;
-    self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.hidden) return;
 
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(line => {
-      const ratio = self.scale / line.scale;
-      if (self.notDrawingActionInProgress() || ratio > 2) self.drawPath(line);
-      else self.drawSLine(line);
+      const ratio = this.scale / line.scale;
+      if (this.notDrawingActionInProgress() || ratio > 2) this.drawPath(line);
+      else this.drawSLine(line);
     });
   }
 
-  redraw(timeout = false) {
-    // this.draw();
+  redraw() {
+    if (this.destroyed) return;
     const self = this;
-    if (true) requestAnimationFrame(self.draw.bind(self));
-    else {
-      if (this.drawHandle) Meteor.clearTimeout(this.drawHandle);
-      this.drawHandle = Meteor.setTimeout(() => {
-        requestAnimationFrame(self.draw.bind(self));
-      }, 200);
-    }
+    requestAnimationFrame(self.draw.bind(self));
   }
 }

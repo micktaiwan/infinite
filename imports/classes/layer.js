@@ -1,12 +1,13 @@
 export default class Layer {
-  constructor(manager, index, bookId) {
+  constructor(manager, _id, fields) {
+    this._id = _id;
     this.manager = manager;
-    this.index = index;
-    this.bookId = bookId;
+    this.index = fields?.index;
+    this.bookId = manager.bookId;
 
     this.canvas = document.createElement('canvas');
     // this.canvas.style.zIndex = index + 1;
-    this.canvas.tabIndex = index;
+    this.canvas.tabIndex = this.index;
     this.ctx = this.canvas.getContext('2d');
     this.el = document.getElementById('layers');
     this.el.appendChild(this.canvas);

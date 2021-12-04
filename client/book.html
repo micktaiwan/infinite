@@ -1,5 +1,5 @@
 <template name="book">
-  <ul id="menu">
+  <ul id="vmenu">
     <li>
       <button class="js-add-layer"><i class="fas fa-plus"></i></button>
     </li>
@@ -8,6 +8,15 @@
       <button class="{{active index}} js-focus-layer">{{add index 1}}</button>
     </li>
     {{/each}}
+  </ul>
+
+  <ul id="hmenu">
+    <li>
+      Layers
+      <ul>
+        <li class="js-hide-layer">Toggle layer <span>⬆T</span></li>
+      </ul>
+    </li>
   </ul>
 
   <div id="layers"></div>

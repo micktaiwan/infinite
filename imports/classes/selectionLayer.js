@@ -2,8 +2,8 @@ import Layer from './layer';
 import { Lines } from '../api/books/collections';
 
 export default class SelectionLayer extends Layer {
-  constructor(manager, index) {
-    super(manager, index);
+  constructor(manager) {
+    super(manager, manager.bookId);
 
     // this.ctx.font = 'Calibri';
     // this.ctx.fillStyle = '#f00';

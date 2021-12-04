@@ -29,7 +29,7 @@ a {
   }
 }
 
-#menu {
+#vmenu {
   user-select: none;
   z-index: 100;
   list-style: none;
@@ -51,6 +51,43 @@ a {
     &.active {
       background: rgb(93, 146, 100);
       color: #fff;
+    }
+    &.hidden {
+      background: #686868;
+    }
+  }
+}
+
+#hmenu {
+  user-select: none;
+  background: #686868;
+  color: #fff;
+  z-index: 200;
+  position: absolute;
+  list-style: none;
+  margin: 0 0 0 50px;
+  padding: 0;
+  width: calc(100% - 50px);
+
+  li {
+    cursor: pointer;
+    float: left;
+    margin: 0;
+    padding: 5px;
+    &:hover {
+      background: rgb(93, 146, 100);
+      color: #fff;
+      > ul {
+        display: block;
+      }
+    }
+    ul {
+      position: absolute;
+      background: #686868;
+      display: none;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
   }
 }
