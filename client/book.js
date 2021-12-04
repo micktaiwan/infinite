@@ -52,14 +52,15 @@ Template.book.events({
     Session.set('activeLayer', Layers.find({ bookId: FlowRouter.getParam('bookId') }).count());
     tpl.manager.addLayer();
   },
-  'click .js-hide-layer'(e, tpl) {
-    const { index } = this;
-    tpl.manager.toggleLayer(index);
+  'click .js-toggle-layer'(e, tpl) {
+    tpl.manager.toggleLayer();
+  },
+  'click .js-remove-layer'(e, tpl) {
+    if (confirm('Are you sure you want to remove the last layer?')) {
+      tpl.manager.removeLayer();
+    }
   },
   'keydown'(e, tpl) {
-    if (e.shiftKey && e.keyCode === 84) {
-      const { index } = this;
-      tpl.manager.toggleLayer(index);
-    }
+    if (e.shiftKey && e.keyCode === 84) tpl.manager.toggleLayer();
   },
 });

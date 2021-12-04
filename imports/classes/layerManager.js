@@ -56,6 +56,15 @@ export default class LayerManager {
     this.redraw();
   }
 
+  removeLayer() {
+    const index = this.layers.length - 1;
+    this.layers[index].remove();
+    this.layers.splice(index, 1);
+    this.currentLayer = index - 1;
+    this.focusCurrentLayer();
+    this.redraw();
+  }
+
   destroy() {
     console.log('LayerManager: destroy');
     this.observeHandle.stop();
@@ -72,6 +81,7 @@ export default class LayerManager {
   }
 
   focusCurrentLayer() {
+    if (this.currentLayer === -1) return;
     this.layers[this.currentLayer].focus();
   }
 

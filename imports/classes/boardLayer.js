@@ -82,6 +82,10 @@ export default class BoardLayer extends Layer {
     // };
   }
 
+  remove() {
+    Meteor.call('removeLayer', this._id);
+  }
+
   onKeyDown(event) {
     if (this.hidden) return;
     if (event.repeat) return;
