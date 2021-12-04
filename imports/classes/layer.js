@@ -36,10 +36,6 @@ export default class Layer {
     this.canvas.focus();
   }
 
-  redraw() {
-    console.log('redraw base');
-  }
-
   drawLine(x0, y0, x1, y1, lineWidth, color = '#000', ctx = this.ctx) {
     ctx.beginPath();
     ctx.moveTo(x0, y0);

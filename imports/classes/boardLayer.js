@@ -119,6 +119,9 @@ export default class BoardLayer extends Layer {
 
   onMouseMove(event) {
     if (this.hidden) return;
+    // this.timer = Date.now();
+    // const diff = this.timer - this.oldTimer;
+    // if (this.type === 1 && diff > 15) console.log('move', diff);
 
     // get mouse position
     this.cursorX = event.clientX - 50;
@@ -235,6 +238,7 @@ export default class BoardLayer extends Layer {
     // drawing
     if (this.leftMouseDown) {
       const color = '#000';
+      this.type = 1;
 
       // add the line to our drawing history
       this.lines.push({
@@ -247,7 +251,6 @@ export default class BoardLayer extends Layer {
         color,
         // type: this.type,
       });
-      this.type = 1;
 
       // draw a line
       this.drawLine(this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY, this.pressure, color);
@@ -257,6 +260,7 @@ export default class BoardLayer extends Layer {
 
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;
+    // this.oldTimer = this.timer;
   }
 
   onMouseDown(event) {
@@ -283,8 +287,8 @@ export default class BoardLayer extends Layer {
   onMouseUp() {
     if (this.hidden) return;
 
-    if (this.panning) this.stopPan();
     this.saveDrawings();
+    if (this.panning) this.stopPan();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
@@ -516,15 +520,12 @@ export default class BoardLayer extends Layer {
 
   saveDrawings(forceSave = false) {
     if (this.lines.length) forceSave = true;
-    if (forceSave) {
-      this.forceSave = false;
-      // this.drawings.push(this.lines);
-      // this.toSVG(this.lines);
-      // this.saveToIndexedDB('drawings', this.drawings);
-      const self = this;
-      Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
-      this.lines = [];
-    }
+    if (!forceSave) return;
+    this.forceSave = false;
+    // this.saveToIndexedDB('drawings', this.drawings);
+    const self = this;
+    Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
+    this.lines = [];
   }
 
   reset(redraw = true) {
