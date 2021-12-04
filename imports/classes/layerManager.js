@@ -36,15 +36,21 @@ export default class LayerManager {
     this.initializing = true;
     const self = this;
     this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
-      added: (id, fields) => {
-        if (this.findLayer(id) > -1) { console.log('why?'); return; }
+      added: (_id, fields) => {
         // console.log('LayerManager: added', id, fields);
-        this.dimOpacityForAllLayers();
-        this.layers.push(new BoardLayer(this, id, fields));
+        self.dimOpacityForAllLayers();
+        self.layers.push(new BoardLayer(self, _id, fields));
         if (!self.initializing) {
-          self.currentLayer = fields.index;
-          self.focusCurrentLayer();
+          self.focus(fields.index);
+          console.log('LayerManager: added. currentLayer:', self.currentLayer);
         }
+      },
+      removed: _id => {
+        const layer = self.findLayer(_id);
+        layer.destroy();
+        self.layers.splice(layer.index, 1);
+        if (self.currentLayer >= layer.index) self.focus(self.layers.length - 1);
+        self.redraw();
       },
     });
     this.initializing = false;
@@ -58,11 +64,9 @@ export default class LayerManager {
 
   removeLayer() {
     const index = this.layers.length - 1;
-    this.layers[index].remove();
-    this.layers.splice(index, 1);
-    this.currentLayer = index - 1;
-    this.focusCurrentLayer();
-    this.redraw();
+    this.layers[index].remove(); // will trigger observeChanges
+    if (this.currentLayer >= index) return this.layers.length - 1;
+    else return this.currentLayer;
   }
 
   destroy() {
@@ -77,29 +81,29 @@ export default class LayerManager {
   }
 
   findLayer(id) {
-    return this.layers.find(layer => layer.id === id);
+    return this.layers.find(layer => layer._id === id);
   }
 
-  focusCurrentLayer() {
-    if (this.currentLayer === -1) return;
-    this.layers[this.currentLayer].focus();
+  focusCurrentLayerCanvas() {
+    this.layers[this.currentLayer].focusCanvas();
   }
 
   dimOpacityForAllLayers() {
     this.layers.forEach(layer => {
       layer.canvas.style.opacity = 0.4;
+      layer.canvas.style.zIndex = 1;
     });
   }
 
   focus(index) {
-    console.log('LayerManager: focus', index);
-    this.dimOpacityForAllLayers();
-    this.layers[this.currentLayer].canvas.style.zIndex = 1;
-    this.layers[index].canvas.style.zIndex = 100;
-    this.layers[index].canvas.style.opacity = 1;
+    if (index < 0) return;
+    // console.log('LayerManager: focus', index);
     this.currentLayer = index;
-    this.focusCurrentLayer();
+    this.dimOpacityForAllLayers();
+    this.layers[index].canvas.style.opacity = 1;
+    this.layers[index].canvas.style.zIndex = 100;
     if (this.layers[index].hidden) this.toggleLayer(index);
+    this.focusCurrentLayerCanvas();
   }
 
   getLayers() {
@@ -107,7 +111,6 @@ export default class LayerManager {
   }
 
   addLayer() {
-    this.dimOpacityForAllLayers();
     Meteor.call('addLayer', this.bookId, this.layers.length);
   }
 

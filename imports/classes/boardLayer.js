@@ -4,7 +4,6 @@ import { Lines } from '../api/books/collections';
 export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
-    // this.drawings = [];
     this.lines = [];
     this.userId = Meteor.userId();
 

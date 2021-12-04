@@ -57,7 +57,7 @@ Template.book.events({
   },
   'click .js-remove-layer'(e, tpl) {
     if (confirm('Are you sure you want to remove the last layer?')) {
-      tpl.manager.removeLayer();
+      Session.set('activeLayer', tpl.manager.removeLayer());
     }
   },
   'keydown'(e, tpl) {

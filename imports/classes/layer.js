@@ -6,7 +6,6 @@ export default class Layer {
     this.bookId = manager.bookId;
 
     this.canvas = document.createElement('canvas');
-    // this.canvas.style.zIndex = index + 1;
     this.canvas.tabIndex = this.index;
     this.ctx = this.canvas.getContext('2d');
     this.el = document.getElementById('layers');
@@ -33,7 +32,7 @@ export default class Layer {
     this.el.removeChild(this.canvas);
   }
 
-  focus() {
+  focusCanvas() {
     this.canvas.focus();
   }
 
