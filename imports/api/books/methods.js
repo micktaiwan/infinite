@@ -66,6 +66,7 @@ Meteor.methods({
     if (!this.userId) throw new Meteor.Error('not-authorized');
     Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
+
   stats() {
     const stats = {};
     Books.find({}).forEach(book => {
@@ -81,6 +82,7 @@ Meteor.methods({
     });
     return stats;
   },
+
   toggleLayer(id, hidden) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     Layers.update(id, { $set: { hidden } });

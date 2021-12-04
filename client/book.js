@@ -41,8 +41,12 @@ Template.book.helpers({
 Template.book.events({
   'click .js-focus-layer'(e, tpl) {
     const { index } = this;
-    tpl.manager.focus(index);
-    Session.set('activeLayer', index);
+    if (index === Session.get('activeLayer')) {
+      tpl.manager.toggleLayer(index);
+    } else {
+      tpl.manager.focus(index);
+      Session.set('activeLayer', index);
+    }
   },
   'click .js-add-layer'(e, tpl) {
     Session.set('activeLayer', Layers.find({ bookId: FlowRouter.getParam('bookId') }).count());
@@ -51,5 +55,11 @@ Template.book.events({
   'click .js-hide-layer'(e, tpl) {
     const { index } = this;
     tpl.manager.toggleLayer(index);
+  },
+  'keydown'(e, tpl) {
+    if (e.shiftKey && e.keyCode === 84) {
+      const { index } = this;
+      tpl.manager.toggleLayer(index);
+    }
   },
 });
