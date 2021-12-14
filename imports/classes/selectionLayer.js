@@ -20,7 +20,7 @@ export default class SelectionLayer extends Layer {
     this.ctx.strokeStyle = '#ddd';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    for (let i = 0; i < this.canvas.height; i += 40) {
+    for (let i = 0; i < this.canvas.height; i += 30) {
       this.ctx.moveTo(0, i);
       this.ctx.lineTo(this.canvas.width, i);
       this.ctx.stroke();
