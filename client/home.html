@@ -1,7 +1,7 @@
 <template name="home">
   <div class="page">
     {{#unless Template.subscriptionsReady}}
-      {{> loading}}
+    {{> loading}}
     {{/unless}}
 
     <h1>Infinite Canvas</h1>
@@ -9,24 +9,31 @@
 
     <button class="js-insert-book">Create a new book</button>
     <div class="bookCovers">{{#each bookCovers}} {{>bookCover}} {{/each}}</div>
+
+    <div class="news">
+      <h2>News</h2>
+      <ul>
+        <li>19-dec-2021: Book title edition</li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <template name="bookCover">
-    <span class="bookCover">
-      <div>
-        <div class="title" contenteditable="true">{{title}}</div>
-        <div class="users">{{pluralize users 'user'}}</div>
-        {{#with stats _id}}
-        <div class="stats">
-          <div class="stat">{{layers}} layers</div>
-          <div class="stat">{{lines}} lines</div>
-          <div class="stat">{{segments}} segments</div>
-        </div>
-        {{/with}}
-        <a href="/book/{{_id}}">
-          <button>Open</button>
-        </a>
+  <span class="bookCover">
+    <div>
+      <div class="title" contenteditable="true">{{title}}</div>
+      <div class="users">{{pluralize users 'user'}}</div>
+      {{#with stats _id}}
+      <div class="stats">
+        <div class="stat">{{layers}} layers</div>
+        <div class="stat">{{lines}} lines</div>
+        <div class="stat">{{segments}} segments</div>
       </div>
-    </span>
+      {{/with}}
+      <a href="/book/{{_id}}">
+        <button>Open</button>
+      </a>
+    </div>
+  </span>
 </template>
