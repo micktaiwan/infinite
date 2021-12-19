@@ -69,6 +69,16 @@ a {
   padding: 0;
   width: calc(100% - 50px);
 
+  ul.highlight > li.spacer {
+    height: 10px;
+  }
+
+  ul.highlight > li:not(.spacer) {
+    &:hover {
+      background: rgb(93, 146, 100);
+      color: #fff;
+    }
+  }
   li {
     cursor: pointer;
     float: left;
