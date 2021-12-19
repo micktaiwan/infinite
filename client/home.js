@@ -22,6 +22,7 @@ Template.home.events({
 
 Template.bookCover.helpers({
   stats(bookId) { return Session.get('stats')?.[bookId]; },
+  users() { return this.userIds.length; },
 });
 
 Template.bookCover.events({

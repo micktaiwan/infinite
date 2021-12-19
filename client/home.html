@@ -16,6 +16,7 @@
     <span class="bookCover">
       <div>
         <div class="title" contenteditable="true">{{title}}</div>
+        <div class="users">{{pluralize users 'user'}}</div>
         {{#with stats _id}}
         <div class="stats">
           <div class="stat">{{layers}} layers</div>
