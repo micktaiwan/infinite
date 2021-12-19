@@ -23,3 +23,10 @@ Template.home.events({
 Template.bookCover.helpers({
   stats(bookId) { return Session.get('stats')?.[bookId]; },
 });
+
+Template.bookCover.events({
+  'blur .title'(e) {
+    const title = e.currentTarget.innerHTML;
+    Meteor.call('bookUpdate', this._id, { title });
+  },
+});

@@ -15,6 +15,16 @@ Meteor.methods({
     Books.update(bookId, { $addToSet: { userIds: this.userId } });
   },
 
+  bookUpdate(bookId, data) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!bookId) throw new Meteor.Error('no-book-id');
+    if (!data) throw new Meteor.Error('no-data');
+    if (!Books.findOne(bookId)) throw new Meteor.Error('no-book');
+    if (!Books.findOne(bookId).userIds.includes(this.userId)) throw new Meteor.Error('not-authorized');
+    console.log('bookUpdate', bookId, data);
+    Books.update(bookId, { $set: data });
+  },
+
   saveLines({ lines, layerIndex, bookId }) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     if (!lines.length) return;
