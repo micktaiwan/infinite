@@ -25,8 +25,11 @@ Template.bookCover.helpers({
 });
 
 Template.bookCover.events({
-  'blur .title'(e) {
-    const title = e.currentTarget.innerHTML;
+  'keydown .title'(e) {
+    if (e.keyCode !== 13) return;
+    e.preventDefault();
+    const title = $(e.target).text();
     Meteor.call('bookUpdate', this._id, { title });
+    e.target.blur();
   },
 });
