@@ -7,4 +7,5 @@ import '../imports/api/books/publish';
 Meteor.startup(() => {
   // code to run on server at startup
   Lines.rawCollection().createIndex({ bookId: 1, layerIndex: 1, order: 1 });
+  Lines.rawCollection().createIndex({ order: 1 });
 });

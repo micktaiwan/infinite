@@ -37,15 +37,15 @@ export default class BoardLayer extends Layer {
     const self = this;
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
       added: (id, line) => {
-        if (line.userId !== self.userId) self.redraw(true);
+        if (line.userId !== self.userId) self.redraw();
       },
       changed: (id, xfields) => {
         const line = Lines.findOne(id);
-        if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw(true);
+        if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
       removed: id => {
         if (!Lines.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
-        if (!self.notDrawingActionInProgress()) self.redraw(true);
+        if (!self.notDrawingActionInProgress()) self.redraw();
       },
     });
   }
@@ -592,7 +592,6 @@ export default class BoardLayer extends Layer {
 
   undo() {
     Meteor.call('undo', this.bookId, this.index);
-    this.redraw();
   }
 
   draw() {

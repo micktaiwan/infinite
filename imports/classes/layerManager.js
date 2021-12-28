@@ -81,7 +81,7 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
-    console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
+    // console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
     this.layers[this.currentLayer].focusCanvas();
   }
 
@@ -93,7 +93,7 @@ export default class LayerManager {
   }
 
   focus(index) {
-    console.log('LayerManager: focus', index);
+    // console.log('LayerManager: focus', index);
     if (index < 0) return;
     this.currentLayer = index;
     this.dimOpacityForAllLayers();
