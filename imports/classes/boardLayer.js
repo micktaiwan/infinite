@@ -609,7 +609,6 @@ export default class BoardLayer extends Layer {
 
   redraw() {
     if (this.destroyed) return;
-    if (this.hidden) return;
     const self = this;
     requestAnimationFrame(self.draw.bind(self));
   }
