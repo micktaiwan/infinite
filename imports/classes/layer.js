@@ -40,7 +40,7 @@ export default class Layer {
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = this.randomColor ? `#${Math.floor(Math.random() * 16777215).toString(16)}` : color;
     ctx.lineWidth = lineWidth;
     ctx.stroke();
   }
