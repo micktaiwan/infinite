@@ -6,7 +6,7 @@ export default class Layer {
     this.bookId = manager.bookId;
 
     this.canvas = document.createElement('canvas');
-    this.canvas.tabIndex = this.index;
+    this.canvas.tabIndex = this.index + 1;
     this.ctx = this.canvas.getContext('2d');
     this.el = document.getElementById('layers');
     this.el.appendChild(this.canvas);

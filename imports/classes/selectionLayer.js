@@ -8,7 +8,7 @@ export default class SelectionLayer extends Layer {
     // this.ctx.font = 'Calibri';
     // this.ctx.fillStyle = '#f00';
 
-    this.canvas.addEventListener('keydown', () => console.log('selectionLayer keydown'), false);
+    this.canvas.id = 'selectionLayer';
     this.redraw();
   }
 

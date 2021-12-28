@@ -33,7 +33,7 @@ Template.book.helpers({
     return Layers.find({ bookId: FlowRouter.getParam('bookId') });
   },
   active(index) {
-    if (Layers.findOne({ bookId: FlowRouter.getParam('bookId'), index }).hidden) return 'hidden';
+    if (Layers.findOne({ bookId: FlowRouter.getParam('bookId'), index }).positions?.[Meteor.userId()]?.hidden) return 'hidden';
     return index === Session.get('activeLayer') ? 'active' : '';
   },
 });

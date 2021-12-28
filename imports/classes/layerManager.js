@@ -25,7 +25,6 @@ export default class LayerManager {
     this.leftMouseDown = false;
     this.rightMouseDown = false;
 
-    this.idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     this.layers = [];
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
@@ -82,6 +81,7 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
+    console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
     this.layers[this.currentLayer].focusCanvas();
   }
 
@@ -93,13 +93,12 @@ export default class LayerManager {
   }
 
   focus(index) {
+    console.log('LayerManager: focus', index);
     if (index < 0) return;
-    // console.log('LayerManager: focus', index);
     this.currentLayer = index;
     this.dimOpacityForAllLayers();
     this.layers[index].canvas.style.opacity = 1;
     this.layers[index].canvas.style.zIndex = 100;
-    if (this.layers[index].hidden) this.toggleLayer(index);
     this.focusCurrentLayerCanvas();
   }
 

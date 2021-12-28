@@ -95,7 +95,7 @@ Meteor.methods({
 
   toggleLayer(id, hidden) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
-    return Layers.update(id, { $set: { hidden } });
+    return Layers.update(id, { $set: { [`positions.${Meteor.userId()}.hidden`]: hidden } });
   },
 
   removeLayer(_id) {

@@ -10,13 +10,14 @@ export default class BoardLayer extends Layer {
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
-    this.hidden = fields.hidden;
+    this.hidden = false;
     if (fields.positions) {
       const p = fields.positions[this.userId];
       if (!p) return;
-      this.scale = p.scale;
-      this.offsetX = p.offsetX;
-      this.offsetY = p.offsetY;
+      if (p.scale !== undefined) this.scale = p.scale;
+      if (p.offsetX !== undefined) this.offsetX = p.offsetX;
+      if (p.offsetY !== undefined) this.offsetY = p.offsetY;
+      if (p.hidden !== undefined) this.hidden = p.hidden;
     }
     this.pressure = 2;
     this.eraserSize = 40;
@@ -25,19 +26,18 @@ export default class BoardLayer extends Layer {
     this.sel = this.manager.selectionLayer;
     this.selCtx = this.manager.selectionLayer.ctx;
 
-    this.canvas.addEventListener('pointerdown', this.onMouseDown.bind(this), false);
+    this.canvas.addEventListener('pointerdown', this.onMouseDown.bind(this), { passive: true });
     this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), false);
     this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), false);
-    this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), false);
+    this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), { passive: true });
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
     this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), false);
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
 
-    this.initializing = true;
     const self = this;
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
       added: (id, line) => {
-        if (self.initializing || line.userId !== self.userId) self.redraw(true);
+        if (line.userId !== self.userId) self.redraw(true);
       },
       changed: (id, xfields) => {
         const line = Lines.findOne(id);
@@ -48,37 +48,6 @@ export default class BoardLayer extends Layer {
         if (!self.notDrawingActionInProgress()) self.redraw(true);
       },
     });
-    this.initializing = false;
-
-    // const self = this;
-    // this.dbRequest = this.manager.idb.open('infinite-db', 1);
-    // this.dbRequest.onsuccess = () => {
-    //   self.db = self.dbRequest.result;
-    //   const objectStore = self.db.transaction('infinite-db').objectStore('infinite-db');
-    //   objectStore.openCursor().onsuccess = function (event) {
-    //     const cursor = event.target.result;
-    //     if (cursor) {
-    //       // console.log('cursor', cursor.key);
-    //       // populate drawings
-    //       if (cursor.key === `drawings-${self.index}`) {
-    //         self.drawings = cursor.value;
-    //       } else if (cursor.key === `position-${self.index}`) {
-    //         self.offsetX = cursor.value.offsetX;
-    //         self.offsetY = cursor.value.offsetY;
-    //         self.scale = cursor.value.scale;
-    //       }
-    //       self.redraw();
-    //       cursor.continue();
-    //     }
-    //   };
-    // };
-
-    // this.dbRequest.onupgradeneeded = function (event) {
-    //   console.log('onupgradeneeded');
-    //   const db = event.target.result;
-    //   db.onerror = function (e) { console.log(e); };
-    //   db.createObjectStore('infinite-db');
-    // };
   }
 
   remove() {
@@ -264,6 +233,7 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseDown(event) {
+    // console.log('down', this);
     if (this.hidden) return;
 
     this.updateCursorPos(event);
@@ -513,9 +483,7 @@ export default class BoardLayer extends Layer {
   }
 
   savePosition() {
-    // this.saveToIndexedDB('position', { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
-    // console.log('savePosition', this.scale, this.offsetX, this.offsetY);
-    Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY });
+    Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
   }
 
   saveDrawings(forceSave = false) {
@@ -628,6 +596,7 @@ export default class BoardLayer extends Layer {
   }
 
   draw() {
+    // console.log('draw', this.index);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
 
@@ -640,6 +609,7 @@ export default class BoardLayer extends Layer {
 
   redraw() {
     if (this.destroyed) return;
+    if (this.hidden) return;
     const self = this;
     requestAnimationFrame(self.draw.bind(self));
   }
