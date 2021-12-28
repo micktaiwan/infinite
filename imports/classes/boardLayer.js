@@ -462,14 +462,43 @@ export default class BoardLayer extends Layer {
 
   stopRectSelection() {
     this.rectSelection = false;
+    if (this.cursorX < this.startX) {
+      const temp = this.startX;
+      this.startX = this.cursorX;
+      this.cursorX = temp;
+    }
+    if (this.cursorY < this.startY) {
+      const temp = this.startY;
+      this.startY = this.cursorY;
+      this.cursorY = temp;
+    }
     this.selection = {
       type: 'rect',
-      x: this.startX,
-      y: this.startY,
-      width: this.cursorX - this.startX,
-      height: this.cursorY - this.startY,
+      x: this.toTrueX(this.startX),
+      y: this.toTrueY(this.startY),
+      width: this.toTrueX(this.cursorX) - this.toTrueX(this.startX),
+      height: this.toTrueY(this.cursorY) - this.toTrueY(this.startY),
     };
     this.canvas.style.cursor = 'default';
+    const lines = this.findSelectedLines();
+    console.log(lines);
+  }
+
+  findSelectedLines() {
+    const { x, y, width, height } = this.selection;
+    const foundLines = [];
+    Lines.find({ bookId: this.bookId, layerIndex: this.index }).fetch().forEach(obj => {
+      obj.lines.forEach(line => {
+        const x1 = line.x0;
+        const y1 = line.y0;
+        const x2 = line.x1;
+        const y2 = line.y1;
+        if (x1 >= x && x1 <= x + width && y1 >= y && y1 <= y + height && x2 >= x && x2 <= x + width && y2 >= y && y2 <= y + height) {
+          foundLines.push(line);
+        }
+      });
+    });
+    return foundLines;
   }
 
   saveToIndexedDB(key, value) {
