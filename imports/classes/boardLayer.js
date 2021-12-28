@@ -288,47 +288,6 @@ export default class BoardLayer extends Layer {
     return this.canvas.clientWidth / this.scale;
   }
 
-  drawSLine(segment) {
-    for (let j = 0; j < segment.lines.length; j++) {
-      const line = segment.lines[j];
-      const ratio = this.scale / line.scale;
-      if (ratio > 0.005 && ratio < 400) {
-        this.drawLine(
-          this.toScreenX(line.x0),
-          this.toScreenY(line.y0),
-          this.toScreenX(line.x1),
-          this.toScreenY(line.y1),
-          // this.scale / line.scale > 1 ?
-          //   line.pressure * Math.min(this.scale / line.scale, 2) :
-          //   line.pressure * (this.scale / line.scale),
-          line.pressure * ratio,
-          line.color,
-        );
-      }
-    }
-  }
-
-  drawPath(segment) {
-    if (segment.lines.length === 0) return;
-    // this.ctx.lineWidth = line.pressure * ratio;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
-    this.ctx.lineTo(this.toScreenX(segment.lines[0].x1), this.toScreenY(segment.lines[0].y1));
-    this.ctx.stroke();
-
-    for (let j = 1; j < segment.lines.length; j++) {
-      const line = segment.lines[j];
-      const ratio = this.scale / line.scale;
-      if (ratio > 0.005 && ratio < 400) {
-        this.ctx.strokeStyle = this.color;
-        if (this.notDrawingActionInProgress()) this.ctx.lineWidth = 1;
-        else this.ctx.lineWidth = line.pressure * ratio;
-        this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
-        this.ctx.stroke();
-      }
-    }
-  }
-
   notDrawingActionInProgress() {
     // console.log(this.zooming, this.panning, this.erasing, this.straightLine, this.rectSelection);
     return this.zooming || this.panning || this.erasing || this.straightLine || this.rectSelection;
@@ -621,6 +580,47 @@ export default class BoardLayer extends Layer {
 
   undo() {
     Meteor.call('undo', this.bookId, this.index);
+  }
+
+  drawSLine(segment) {
+    for (let j = 0; j < segment.lines.length; j++) {
+      const line = segment.lines[j];
+      const ratio = this.scale / line.scale;
+      if (ratio > 0.005 && ratio < 400) {
+        this.drawLine(
+          this.toScreenX(line.x0),
+          this.toScreenY(line.y0),
+          this.toScreenX(line.x1),
+          this.toScreenY(line.y1),
+          // this.scale / line.scale > 1 ?
+          //   line.pressure * Math.min(this.scale / line.scale, 2) :
+          //   line.pressure * (this.scale / line.scale),
+          line.pressure * ratio,
+          line.color,
+        );
+      }
+    }
+  }
+
+  drawPath(segment) {
+    if (segment.lines.length === 0) return;
+    // this.ctx.lineWidth = line.pressure * ratio;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
+    this.ctx.lineTo(this.toScreenX(segment.lines[0].x1), this.toScreenY(segment.lines[0].y1));
+    this.ctx.stroke();
+
+    for (let j = 1; j < segment.lines.length; j++) {
+      const line = segment.lines[j];
+      const ratio = this.scale / line.scale;
+      if (ratio > 0.005 && ratio < 400) {
+        this.ctx.strokeStyle = this.color;
+        if (this.notDrawingActionInProgress()) this.ctx.lineWidth = 1;
+        else this.ctx.lineWidth = line.pressure * ratio;
+        this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
+        this.ctx.stroke();
+      }
+    }
   }
 
   draw() {
