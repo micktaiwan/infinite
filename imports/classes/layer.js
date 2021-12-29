@@ -4,6 +4,12 @@ export default class Layer {
     this.manager = manager;
     this.index = fields?.index;
     this.bookId = manager.bookId;
+    this.lines = [];
+    this.userId = Meteor.userId();
+
+    this.scale = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
 
     this.canvas = document.createElement('canvas');
     this.canvas.tabIndex = this.index + 1;
@@ -20,6 +26,8 @@ export default class Layer {
     this.offsetX = 0;
     this.offsetY = 0;
 
+    this.marginLeft = 50;
+
     // this.selCanvas = document.getElementById('selection');
     // this.selCtx = this.selCanvas.getContext('2d');
 
@@ -30,6 +38,48 @@ export default class Layer {
   destroy() {
     this.destroyed = true;
     this.el.removeChild(this.canvas);
+  }
+
+  toScreenX(xTrue) {
+    return (xTrue + this.offsetX) * this.scale;
+  }
+
+  toScreenY(yTrue) {
+    return (yTrue + this.offsetY) * this.scale;
+  }
+
+  toTrueX(xScreen) {
+    return xScreen / this.scale - this.offsetX;
+  }
+
+  toTrueY(yScreen) {
+    return yScreen / this.scale - this.offsetY;
+  }
+
+  trueHeight() {
+    return this.canvas.clientHeight / this.scale;
+  }
+
+  trueWidth() {
+    return this.canvas.clientWidth / this.scale;
+  }
+
+  dist(x1, y1, x2, y2, atScale = true) {
+    return Layer.dist(x1, y1, x2, y2) * (atScale ? this.scale : 1);
+  }
+
+  startPan() {
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
+    this.hasMoved = false;
+    this.canvas.style.cursor = 'move';
+    this.panning = true;
+  }
+
+  stopPan() {
+    this.canvas.style.cursor = 'default';
+    this.panning = false;
+    if (this.hasMoved) this.redraw();
   }
 
   focusCanvas() {
@@ -45,11 +95,20 @@ export default class Layer {
     ctx.stroke();
   }
 
+  reset(redraw = true) {
+    if (this.destroyed) return;
+    console.log('reset');
+    this.scale = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    if (redraw) this.redraw();
+  }
+
   updateCursorPos(event) {
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;
-    this.cursorX = event.pageX;
-    this.cursorY = event.pageY;
+    this.cursorX = event.clientX - this.marginLeft;
+    this.cursorY = event.clientY;
   }
 
   boundingBox() {

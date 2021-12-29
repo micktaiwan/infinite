@@ -81,7 +81,7 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
-    // console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
+    console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
     this.layers[this.currentLayer].focusCanvas();
   }
 
@@ -93,13 +93,31 @@ export default class LayerManager {
   }
 
   focus(index) {
-    // console.log('LayerManager: focus', index);
+    console.log('LayerManager: focus', index);
     if (index < 0) return;
     this.currentLayer = index;
     this.dimOpacityForAllLayers();
     this.layers[index].canvas.style.opacity = 1;
     this.layers[index].canvas.style.zIndex = 100;
     this.focusCurrentLayerCanvas();
+  }
+
+  focusSelectionLayer() {
+    this.layers[this.currentLayer].canvas.style.zIndex = this.currentLayer;
+    this.selectionLayer.canvas.style.zIndex = 100;
+    this.selectionLayer.focusCanvas();
+    this.layers.forEach(layer => {
+      console.log(layer.canvas);
+    });
+  }
+
+  unfocusSelectionLayer() {
+    this.selectionLayer.canvas.style.zIndex = 0;
+    console.log(this.selectionLayer.canvas);
+    this.focus(this.currentLayer);
+    this.layers.forEach(layer => {
+      console.log(layer.canvas);
+    });
   }
 
   getLayers() {

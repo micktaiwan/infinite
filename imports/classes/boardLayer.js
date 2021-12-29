@@ -4,12 +4,6 @@ import { Lines } from '../api/books/collections';
 export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
-    this.lines = [];
-    this.userId = Meteor.userId();
-
-    this.scale = 1;
-    this.offsetX = 0;
-    this.offsetY = 0;
     this.hidden = false;
     if (fields.positions) {
       const p = fields.positions[this.userId];
@@ -27,15 +21,15 @@ export default class BoardLayer extends Layer {
     this.selCtx = this.manager.selectionLayer.ctx;
 
     this.canvas.addEventListener('pointerdown', this.onMouseDown.bind(this), { passive: true });
-    this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), false);
-    this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), false);
+    this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), { passive: true });
+    this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), { passive: true });
     this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), { passive: true });
-    this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), false);
-    this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), false);
-    this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
+    this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), { passive: true });
+    this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), { passive: true });
+    this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
 
     const self = this;
-    Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
+    this.observeChangesHandler = Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
       added: (id, line) => {
         if (line.userId !== self.userId) self.redraw();
       },
@@ -51,6 +45,7 @@ export default class BoardLayer extends Layer {
   }
 
   remove() {
+    this.observeChangesHandler.stop();
     Meteor.call('removeLayer', this._id);
   }
 
@@ -88,12 +83,9 @@ export default class BoardLayer extends Layer {
 
   onMouseMove(event) {
     if (this.hidden) return;
-    // this.timer = Date.now();
-    // const diff = this.timer - this.oldTimer;
-    // if (this.type === 1 && diff > 15) console.log('move', diff);
 
     // get mouse position
-    this.cursorX = event.clientX - 50;
+    this.cursorX = event.clientX - this.marginLeft;
     this.cursorY = event.clientY;
 
     // with a pointer, move is triggered also with a tilt
@@ -155,25 +147,12 @@ export default class BoardLayer extends Layer {
               lines.splice(j, 1);
               j--;
               changed = true;
-
-            // TODO: split into 2 drawings if needed
+              // TODO: split into 2 drawings if needed
             }
-          // if (drawing.length === 0) {
-          //   self.drawings.splice(i, 1);
-          //   i--;
-          //   nb++;
-          // }
           }
-          if (changed) {
-            changes.push({ id: entry._id, lines });
-          // console.log('eraser', entry._id, lines.length);
-          }
+          if (changed) changes.push({ id: entry._id, lines });
         });
-        if (changes.length > 0) {
-        // console.log('changes', changes.length);
-          Meteor.call('updateLinesBatch', changes);
-        }
-        // if (changes.length && !Lines.length) self.reset(false);
+        if (changes.length > 0) Meteor.call('updateLinesBatch', changes);
         self.prevCursorX = self.cursorX;
         self.prevCursorY = self.cursorY;
       });
@@ -239,14 +218,11 @@ export default class BoardLayer extends Layer {
     this.updateCursorPos(event);
     this.lines = [];
 
-    // detect left clicks
-    if (event.button === 0) {
+    if (event.button === 0) { // left
       this.leftMouseDown = true;
       this.rightMouseDown = false;
       this.type = 0;
-    }
-    // detect right clicks
-    if (event.button === 2) {
+    } else if (event.button === 2) { // right
       this.rightMouseDown = true;
       this.leftMouseDown = false;
       this.type = 3;
@@ -264,47 +240,13 @@ export default class BoardLayer extends Layer {
     this.type = 2;
   }
 
-  toScreenX(xTrue) {
-    return (xTrue + this.offsetX) * this.scale;
-  }
-
-  toScreenY(yTrue) {
-    return (yTrue + this.offsetY) * this.scale;
-  }
-
-  toTrueX(xScreen) {
-    return xScreen / this.scale - this.offsetX;
-  }
-
-  toTrueY(yScreen) {
-    return yScreen / this.scale - this.offsetY;
-  }
-
-  trueHeight() {
-    return this.canvas.clientHeight / this.scale;
-  }
-
-  trueWidth() {
-    return this.canvas.clientWidth / this.scale;
-  }
-
   notDrawingActionInProgress() {
     // console.log(this.zooming, this.panning, this.erasing, this.straightLine, this.rectSelection);
     return this.zooming || this.panning || this.erasing || this.straightLine || this.rectSelection;
   }
 
-  startPan() {
-    this.prevCursorX = this.cursorX;
-    this.prevCursorY = this.cursorY;
-    this.hasMoved = false;
-    this.canvas.style.cursor = 'move';
-    this.panning = true;
-  }
-
   stopPan() {
-    this.canvas.style.cursor = 'default';
-    this.panning = false;
-    if (this.hasMoved) this.redraw();
+    super.stopPan();
     this.savePosition();
   }
 
@@ -417,6 +359,7 @@ export default class BoardLayer extends Layer {
     this.startX = this.cursorX;
     this.startY = this.cursorY;
     this.canvas.style.cursor = 'crosshair';
+    this.sel.lines = [];
   }
 
   stopRectSelection() {
@@ -439,25 +382,29 @@ export default class BoardLayer extends Layer {
       height: this.toTrueY(this.cursorY) - this.toTrueY(this.startY),
     };
     this.canvas.style.cursor = 'default';
-    const lines = this.findSelectedLines();
-    console.log(lines);
+    this.copyLinesToSelection();
+    this.manager.focusSelectionLayer();
   }
 
-  findSelectedLines() {
+  copyLinesToSelection() {
     const { x, y, width, height } = this.selection;
     const foundLines = [];
-    Lines.find({ bookId: this.bookId, layerIndex: this.index }).fetch().forEach(obj => {
-      obj.lines.forEach(line => {
-        const x1 = line.x0;
-        const y1 = line.y0;
-        const x2 = line.x1;
-        const y2 = line.y1;
-        if (x1 >= x && x1 <= x + width && y1 >= y && y1 <= y + height && x2 >= x && x2 <= x + width && y2 >= y && y2 <= y + height) {
+    const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index }).fetch();
+    objs.forEach(obj => {
+      for (let i = 0; i < obj.lines.length; i++) {
+        const line = obj.lines[i];
+        if (line.x0 >= x && line.x0 <= x + width && line.y0 >= y && line.y0 <= y + height && line.x1 >= x && line.x1 <= x + width && line.y1 >= y && line.y1 <= y + height) {
           foundLines.push(line);
+          obj.lines.splice(i, 1);
+          i--;
         }
-      });
+      }
+      Meteor.call('updateLines', obj._id, obj.lines);
     });
-    return foundLines;
+    this.sel.selectionOriginLayer = this;
+    this.sel.lines = foundLines;
+    this.sel.redraw();
+    this.redraw();
   }
 
   saveToIndexedDB(key, value) {
@@ -485,22 +432,13 @@ export default class BoardLayer extends Layer {
   }
 
   reset(redraw = true) {
-    if (this.destroyed) return;
-    console.log('reset');
-    this.scale = 1;
-    this.offsetX = 0;
-    this.offsetY = 0;
-    if (redraw) this.redraw();
+    super.reset(redraw);
     this.savePosition();
   }
 
   clear() {
     // this.drawings = [];
     this.reset();
-  }
-
-  dist(x1, y1, x2, y2, atScale = true) {
-    return Layer.dist(x1, y1, x2, y2) * (atScale ? this.scale : 1);
   }
 
   drawEraser(x, y) {
@@ -592,9 +530,6 @@ export default class BoardLayer extends Layer {
           this.toScreenY(line.y0),
           this.toScreenX(line.x1),
           this.toScreenY(line.y1),
-          // this.scale / line.scale > 1 ?
-          //   line.pressure * Math.min(this.scale / line.scale, 2) :
-          //   line.pressure * (this.scale / line.scale),
           line.pressure * ratio,
           line.color,
         );
