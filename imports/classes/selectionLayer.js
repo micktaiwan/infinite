@@ -162,7 +162,7 @@ export default class SelectionLayer extends Layer {
       line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
       line.x1 = this.selectionOriginLayer.toTrueX(this.scale * (line.x1 + this.offsetX));
       line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
-      line.pressure *= this.scale;
+      line.pressure *= this.scale / this.selectionOriginLayer.scale;
     });
     this.selectionOriginLayer.lines = this.lines;
     this.selectionOriginLayer.saveDrawings();

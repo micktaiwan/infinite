@@ -374,7 +374,7 @@ export default class BoardLayer extends Layer {
     this.sel.selectionOriginLayer = this;
     const { x, y, width, height } = this.sel.selection;
     const foundLines = [];
-    const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index }).fetch();
+    const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index });
     objs.forEach(obj => {
       for (let i = 0; i < obj.lines.length; i++) {
         const line = obj.lines[i];
