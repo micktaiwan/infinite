@@ -1,6 +1,23 @@
 import { Lines, Books, Layers } from './collections';
 
+// splice lines in group of 100
+
+// function saveLines(lines, bookId, layerIndex) {
+//   let order = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
+//   for (let i = 0; i < lines.length; i += 100) {
+//     order++;
+//     Lines.insert({
+//       bookId,
+//       layerIndex,
+//       order,
+//       lines: lines.slice(i, i + 100),
+//       userId: this.userId,
+//     });
+//   }
+// }
+
 Meteor.methods({
+
   booksInsert() {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     Books.insert({

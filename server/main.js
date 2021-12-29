@@ -1,6 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Lines } from '../imports/api/books/collections';
 
+import '../imports/api/books/serverMethods';
 import '../imports/api/books/methods';
 import '../imports/api/books/publish';
 
