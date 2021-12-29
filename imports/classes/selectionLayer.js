@@ -12,7 +12,7 @@ export default class SelectionLayer extends Layer {
     this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), { passive: true });
     this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), { passive: true });
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
-
+    this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), { passive: true });
     this.redraw();
   }
 
@@ -158,10 +158,11 @@ export default class SelectionLayer extends Layer {
 
   copyLinesToOriginLayer() {
     this.lines.forEach(line => {
-      line.x0 += (this.offsetX - this.selectionOriginLayer.offsetX);
-      line.y0 += (this.offsetY - this.selectionOriginLayer.offsetY);
-      line.x1 += (this.offsetX - this.selectionOriginLayer.offsetX);
-      line.y1 += (this.offsetY - this.selectionOriginLayer.offsetY);
+      line.x0 = (line.x0 + (this.offsetX - this.selectionOriginLayer.offsetX)) * (this.scale / this.selectionOriginLayer.scale);
+      line.y0 = (line.y0 + (this.offsetY - this.selectionOriginLayer.offsetY)) * (this.scale / this.selectionOriginLayer.scale);
+      line.x1 = (line.x1 + (this.offsetX - this.selectionOriginLayer.offsetX)) * (this.scale / this.selectionOriginLayer.scale);
+      line.y1 = (line.y1 + (this.offsetY - this.selectionOriginLayer.offsetY)) * (this.scale / this.selectionOriginLayer.scale);
+      // line.pressure = this.pressure * this.scale / this.selectionOriginLayer.scale;
     });
     this.selectionOriginLayer.lines = this.lines;
     this.selectionOriginLayer.saveDrawings();
@@ -228,6 +229,28 @@ export default class SelectionLayer extends Layer {
     this.ctx.lineTo(this.selection.x, this.selection.y);
     this.ctx.stroke();
     this.ctx.closePath();
+  }
+
+  wheelZoom(event) {
+    // zoom inside selection box
+    const { deltaY } = event;
+    const scaleAmount = -deltaY / 500;
+    this.scale *= (1 + scaleAmount);
+
+    const distX = (event.clientX - this.marginLeft) / this.canvas.clientWidth;
+    const distY = event.clientY / this.canvas.clientHeight;
+
+    // calculate how much we need to zoom
+    const unitsZoomedX = this.trueWidth() * scaleAmount;
+    const unitsZoomedY = this.trueHeight() * scaleAmount;
+
+    const unitsAddLeft = unitsZoomedX * distX;
+    const unitsAddTop = unitsZoomedY * distY;
+
+    this.offsetX -= unitsAddLeft;
+    this.offsetY -= unitsAddTop;
+
+    this.redraw();
   }
 
   infos() {

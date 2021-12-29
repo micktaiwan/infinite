@@ -152,6 +152,24 @@ export default class Layer {
   //   });
   // }
 
+  startZooming() {
+    this.zooming = true;
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
+    this.prevCursorX = this.cursorX;
+    this.prevCursorY = this.cursorY;
+  }
+
+  stopZooming() {
+    this.zooming = false;
+    this.redraw();
+  }
+
+  onMouseWheel(event) {
+    if (this.hidden) return;
+    this.wheelZoom(event);
+  }
+
   static dist(x1, y1, x2, y2) {
     return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
   }

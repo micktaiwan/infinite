@@ -76,11 +76,6 @@ export default class BoardLayer extends Layer {
     else if (event.key === 's') this.stopRectSelection();
   }
 
-  onMouseWheel(event) {
-    if (this.hidden) return;
-    this.wheelZoom(event);
-  }
-
   onMouseMove(event) {
     if (this.hidden) return;
 
@@ -250,17 +245,8 @@ export default class BoardLayer extends Layer {
     this.savePosition();
   }
 
-  startZooming() {
-    this.zooming = true;
-    this.startX = this.cursorX;
-    this.startY = this.cursorY;
-    this.prevCursorX = this.cursorX;
-    this.prevCursorY = this.cursorY;
-  }
-
   stopZooming() {
-    this.zooming = false;
-    this.redraw();
+    super.stopZooming();
     this.savePosition();
   }
 
@@ -464,15 +450,17 @@ export default class BoardLayer extends Layer {
     this.redraw();
   }
 
-  pointerZoom() {
-    const reverse = Math.sign(this.prevCursorY - this.cursorY);
-    // const deltaX = Math.abs(this.startX - this.cursorX);
-    const deltaY = Math.abs(this.startY - this.cursorY);
-    const scaleAmount = reverse * deltaY / 1000;
+  undo() {
+    Meteor.call('undo', this.bookId, this.index);
+  }
+
+  wheelZoom(event) {
+    const { deltaY } = event;
+    const scaleAmount = -deltaY / 500;
     this.scale *= (1 + scaleAmount);
 
-    const distX = this.startX / this.canvas.clientWidth;
-    const distY = this.startY / this.canvas.clientHeight;
+    const distX = (event.clientX - this.marginLeft) / this.canvas.clientWidth;
+    const distY = event.clientY / this.canvas.clientHeight;
 
     // calculate how much we need to zoom
     const unitsZoomedX = this.trueWidth() * scaleAmount;
@@ -485,15 +473,22 @@ export default class BoardLayer extends Layer {
     this.offsetY -= unitsAddTop;
 
     this.redraw();
+    const self = this;
+    if (this.zoomTimerHandle) clearTimeout(this.zoomTimerHandle);
+    this.zoomTimerHandle = Meteor.setTimeout(() => {
+      self.savePosition();
+    }, 200);
   }
 
-  wheelZoom(event) {
-    const { deltaY } = event;
-    const scaleAmount = -deltaY / 500;
+  pointerZoom() {
+    const reverse = Math.sign(this.prevCursorY - this.cursorY);
+    // const deltaX = Math.abs(this.startX - this.cursorX);
+    const deltaY = Math.abs(this.startY - this.cursorY);
+    const scaleAmount = reverse * deltaY / 1000;
     this.scale *= (1 + scaleAmount);
 
-    const distX = event.clientX / this.canvas.clientWidth;
-    const distY = event.clientY / this.canvas.clientHeight;
+    const distX = (this.startX - this.marginLeft) / this.canvas.clientWidth;
+    const distY = this.startY / this.canvas.clientHeight;
 
     // calculate how much we need to zoom
     const unitsZoomedX = this.trueWidth() * scaleAmount;
@@ -508,14 +503,10 @@ export default class BoardLayer extends Layer {
     this.redraw();
 
     const self = this;
-    if (this.wheelZoomTimerHandle) clearTimeout(this.wheelZoomTimerHandle);
-    this.wheelZoomTimerHandle = Meteor.setTimeout(() => {
+    if (this.zoomTimerHandle) clearTimeout(this.zoomTimerHandle);
+    this.zoomTimerHandle = Meteor.setTimeout(() => {
       self.savePosition();
     }, 200);
-  }
-
-  undo() {
-    Meteor.call('undo', this.bookId, this.index);
   }
 
   drawSLine(segment) {
