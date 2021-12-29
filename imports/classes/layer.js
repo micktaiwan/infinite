@@ -104,6 +104,12 @@ export default class Layer {
     if (redraw) this.redraw();
   }
 
+  copyPosition(layer) {
+    this.offsetX = layer.offsetX;
+    this.offsetY = layer.offsetY;
+    this.scale = layer.scale;
+  }
+
   updateCursorPos(event) {
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;

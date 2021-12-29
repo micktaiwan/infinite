@@ -400,6 +400,7 @@ export default class BoardLayer extends Layer {
     });
     this.sel.selectionOriginLayer = this;
     this.sel.lines = foundLines;
+    this.sel.copyPosition(this);
     this.sel.redraw();
     this.redraw();
   }
