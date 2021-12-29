@@ -253,6 +253,29 @@ export default class SelectionLayer extends Layer {
     this.redraw();
   }
 
+  pointerZoom() {
+    const reverse = Math.sign(this.prevCursorY - this.cursorY);
+    // const deltaX = Math.abs(this.startX - this.cursorX);
+    const deltaY = Math.abs(this.startY - this.cursorY);
+    const scaleAmount = reverse * deltaY / 1000;
+    this.scale *= (1 + scaleAmount);
+
+    const distX = (this.startX - this.marginLeft) / this.canvas.clientWidth;
+    const distY = this.startY / this.canvas.clientHeight;
+
+    // calculate how much we need to zoom
+    const unitsZoomedX = this.trueWidth() * scaleAmount;
+    const unitsZoomedY = this.trueHeight() * scaleAmount;
+
+    const unitsAddLeft = unitsZoomedX * distX;
+    const unitsAddTop = unitsZoomedY * distY;
+
+    this.offsetX -= unitsAddLeft;
+    this.offsetY -= unitsAddTop;
+
+    this.redraw();
+  }
+
   infos() {
     this.sel.fillText('Scale', 10, 10);
     this.sel.fillText(this.scale, 90, 10);
