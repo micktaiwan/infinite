@@ -157,14 +157,11 @@ export default class SelectionLayer extends Layer {
   }
 
   copyLinesToOriginLayer() {
-    const factor = this.scale / this.selectionOriginLayer.scale;
-    const offX = this.offsetX - this.selectionOriginLayer.offsetX;
-    const offY = this.offsetY - this.selectionOriginLayer.offsetY;
     this.lines.forEach(line => {
-      line.x0 = factor * (line.x0 + offX);
-      line.y0 = factor * (line.y0 + offY);
-      line.x1 = factor * (line.x1 + offX);
-      line.y1 = factor * (line.y1 + offY);
+      line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
+      line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
+      line.x1 = this.selectionOriginLayer.toTrueX(this.scale * (line.x1 + this.offsetX));
+      line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
     });
     this.selectionOriginLayer.lines = this.lines;
     this.selectionOriginLayer.saveDrawings();
