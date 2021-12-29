@@ -228,11 +228,11 @@ export default class BoardLayer extends Layer {
   onMouseUp() {
     if (this.hidden) return;
 
-    this.saveDrawings();
-    if (this.panning) this.stopPan();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.type = 2;
+    this.saveDrawings();
+    if (this.panning) this.stopPan();
   }
 
   notDrawingActionInProgress() {
@@ -392,16 +392,6 @@ export default class BoardLayer extends Layer {
     this.redraw();
   }
 
-  saveToIndexedDB(key, value) {
-    // save to indexedDB
-    const transaction = this.db.transaction(['infinite-db'], 'readwrite');
-    const objectStore = transaction.objectStore('infinite-db');
-    const request = objectStore.put(value, `${key}-${this.index}`);
-    request.onerror = function (e) {
-      console.log(e);
-    };
-  }
-
   savePosition() {
     Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
   }
@@ -410,8 +400,7 @@ export default class BoardLayer extends Layer {
     if (this.lines.length) forceSave = true;
     if (!forceSave) return;
     this.forceSave = false;
-    const self = this;
-    Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
+    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
     this.lines = [];
   }
 
