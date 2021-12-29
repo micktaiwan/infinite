@@ -68,6 +68,16 @@ export default class Layer {
     return Layer.dist(x1, y1, x2, y2) * (atScale ? this.scale : 1);
   }
 
+  // lineInsideSelection(line) {
+  //   const { x, y, width, height } = this.selection;
+  //   return line.x0 >= x && line.x0 <= x + width && line.y0 >= y && line.y0 <= y + height && line.x1 >= x && line.x1 <= x + width && line.y1 >= y && line.y1 <= y + height;
+  // }
+
+  insideSelection(px, py) {
+    const { x, y, width, height } = this.selection;
+    return px >= x && px <= x + width && py >= y && py <= y + height;
+  }
+
   startPan() {
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;
@@ -97,7 +107,7 @@ export default class Layer {
 
   reset(redraw = true) {
     if (this.destroyed) return;
-    console.log('reset');
+    console.log('reset', this.canvas.id);
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;

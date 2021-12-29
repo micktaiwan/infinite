@@ -59,8 +59,12 @@ export default class SelectionLayer extends Layer {
     if (this.panning) {
       if (dist > 5) {
         this.hasMoved = true;
-        this.offsetX += (this.cursorX - this.prevCursorX) / this.scale;
-        this.offsetY += (this.cursorY - this.prevCursorY) / this.scale;
+        const movedX = (this.cursorX - this.prevCursorX);
+        const movedY = (this.cursorY - this.prevCursorY);
+        this.offsetX += movedX / this.scale;
+        this.offsetY += movedY / this.scale;
+        this.selection.x += movedX;
+        this.selection.y += movedY;
         this.redraw();
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
@@ -136,8 +140,10 @@ export default class SelectionLayer extends Layer {
 
   onMouseDown(event) {
     if (event.button === 0) {
-      // this.startPan(event);
-      // return;
+      if (this.insideSelection(this.cursorX, this.cursorY)) {
+        this.startPan(event);
+        return;
+      }
       this.copyLinesToOriginLayer();
       this.reset(false);
       Meteor.defer(() => { // without this, setting zIndex does not work
@@ -216,11 +222,11 @@ export default class SelectionLayer extends Layer {
     this.ctx.strokeStyle = '#f90';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    this.ctx.moveTo(this.toScreenX(this.selectionOriginLayer.selection.x), this.toScreenY(this.selectionOriginLayer.selection.y));
-    this.ctx.lineTo(this.toScreenX(this.selectionOriginLayer.selection.x + this.selectionOriginLayer.selection.width), this.toScreenY(this.selectionOriginLayer.selection.y));
-    this.ctx.lineTo(this.toScreenX(this.selectionOriginLayer.selection.x + this.selectionOriginLayer.selection.width), this.toScreenY(this.selectionOriginLayer.selection.y + this.selectionOriginLayer.selection.height));
-    this.ctx.lineTo(this.toScreenX(this.selectionOriginLayer.selection.x), this.toScreenY(this.selectionOriginLayer.selection.y + this.selectionOriginLayer.selection.height));
-    this.ctx.lineTo(this.toScreenX(this.selectionOriginLayer.selection.x), this.toScreenY(this.selectionOriginLayer.selection.y));
+    this.ctx.moveTo(this.selection.x, this.selection.y);
+    this.ctx.lineTo(this.selection.x + this.selection.width, this.selection.y);
+    this.ctx.lineTo(this.selection.x + this.selection.width, this.selection.y + this.selection.height);
+    this.ctx.lineTo(this.selection.x, this.selection.y + this.selection.height);
+    this.ctx.lineTo(this.selection.x, this.selection.y);
     this.ctx.stroke();
     this.ctx.closePath();
   }

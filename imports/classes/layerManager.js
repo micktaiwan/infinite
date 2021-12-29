@@ -81,7 +81,7 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
-    console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
+    // console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
     this.layers[this.currentLayer].focusCanvas();
   }
 

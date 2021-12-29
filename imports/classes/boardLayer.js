@@ -38,7 +38,7 @@ export default class BoardLayer extends Layer {
         if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
       removed: id => {
-        if (!Lines.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
+        if (!self.sel.selectionOriginLayer && !Lines.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
         if (!self.notDrawingActionInProgress()) self.redraw();
       },
     });
@@ -371,12 +371,12 @@ export default class BoardLayer extends Layer {
       this.startY = this.cursorY;
       this.cursorY = temp;
     }
-    this.selection = {
+    this.sel.selection = {
       type: 'rect',
-      x: this.toTrueX(this.startX),
-      y: this.toTrueY(this.startY),
-      width: this.toTrueX(this.cursorX) - this.toTrueX(this.startX),
-      height: this.toTrueY(this.cursorY) - this.toTrueY(this.startY),
+      x: this.startX,
+      y: this.startY,
+      width: this.cursorX - this.startX,
+      height: this.cursorY - this.startY,
     };
     this.canvas.style.cursor = 'default';
     this.copyLinesToSelection();
@@ -384,13 +384,16 @@ export default class BoardLayer extends Layer {
   }
 
   copyLinesToSelection() {
-    const { x, y, width, height } = this.selection;
+    this.sel.copyPosition(this);
+    this.sel.selectionOriginLayer = this;
+    const { x, y, width, height } = this.sel.selection;
     const foundLines = [];
     const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index }).fetch();
     objs.forEach(obj => {
       for (let i = 0; i < obj.lines.length; i++) {
         const line = obj.lines[i];
-        if (line.x0 >= x && line.x0 <= x + width && line.y0 >= y && line.y0 <= y + height && line.x1 >= x && line.x1 <= x + width && line.y1 >= y && line.y1 <= y + height) {
+        if (this.toScreenX(line.x0) >= x && this.toScreenX(line.x0) <= x + width &&
+            this.toScreenY(line.y0) >= y && this.toScreenY(line.y0) <= y + height) {
           foundLines.push(line);
           obj.lines.splice(i, 1);
           i--;
@@ -398,9 +401,7 @@ export default class BoardLayer extends Layer {
       }
       Meteor.call('updateLines', obj._id, obj.lines);
     });
-    this.sel.selectionOriginLayer = this;
     this.sel.lines = foundLines;
-    this.sel.copyPosition(this);
     this.sel.redraw();
     this.redraw();
   }
