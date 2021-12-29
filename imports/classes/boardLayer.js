@@ -400,7 +400,9 @@ export default class BoardLayer extends Layer {
     if (this.lines.length) forceSave = true;
     if (!forceSave) return;
     this.forceSave = false;
-    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
+    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId }, (err, res) => {
+      if (err) alert(`saveDrawings: ${err.message}`);
+    });
     this.lines = [];
   }
 
