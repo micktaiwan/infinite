@@ -136,10 +136,11 @@ export default class SelectionLayer extends Layer {
 
   onMouseDown(event) {
     if (event.button === 0) {
-      this.updateCursorPos(event);
       this.copyLinesToOriginLayer();
-      this.manager.unfocusSelectionLayer();
       this.reset(false);
+      Meteor.defer(() => { // without this, setting zIndex does not work
+        this.manager.unfocusSelectionLayer();
+      });
     } else if (event.button === 2) {
       this.rightMouseDown = true;
       this.leftMouseDown = false;

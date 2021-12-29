@@ -352,9 +352,6 @@ export default class BoardLayer extends Layer {
   }
 
   startRectSelection() {
-    // this.saveDrawings(true);
-    // this.redraw();
-    // this.sel.redraw();
     this.rectSelection = true;
     this.startX = this.cursorX;
     this.startY = this.cursorY;
@@ -425,7 +422,6 @@ export default class BoardLayer extends Layer {
     if (this.lines.length) forceSave = true;
     if (!forceSave) return;
     this.forceSave = false;
-    // this.saveToIndexedDB('drawings', this.drawings);
     const self = this;
     Meteor.call('saveLines', { lines: self.lines, layerIndex: self.index, bookId: self.bookId });
     this.lines = [];
