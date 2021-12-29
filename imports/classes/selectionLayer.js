@@ -21,7 +21,6 @@ export default class SelectionLayer extends Layer {
     if (event.key === 'z' && (event.metaKey || event.ctrlKey)) this.undo();
     else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
-    else if (event.key === '&') this.reset();
   }
 
   onKeyUp(event) {
