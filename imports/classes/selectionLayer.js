@@ -144,6 +144,7 @@ export default class SelectionLayer extends Layer {
         return;
       }
       this.copyLinesToOriginLayer();
+      this.selection = undefined;
       this.reset(false);
       Meteor.defer(() => { // without this, setting zIndex does not work
         this.manager.unfocusSelectionLayer();

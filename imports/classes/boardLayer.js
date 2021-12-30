@@ -236,8 +236,7 @@ export default class BoardLayer extends Layer {
   }
 
   notDrawingActionInProgress() {
-    // console.log(this.zooming, this.panning, this.erasing, this.straightLine, this.rectSelection);
-    return this.zooming || this.panning || this.erasing || this.straightLine || this.rectSelection;
+    return this.zooming || this.panning || this.erasing || this.straightLine || this.rectSelection || this.sel.selection;
   }
 
   stopPan() {
@@ -402,9 +401,7 @@ export default class BoardLayer extends Layer {
     if (this.lines.length) forceSave = true;
     if (!forceSave) return;
     this.forceSave = false;
-    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId }, (err, res) => {
-      if (err) alert(`saveDrawings: ${err.message}`);
-    });
+    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
     this.lines = [];
   }
 
