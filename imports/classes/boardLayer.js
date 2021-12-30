@@ -376,6 +376,7 @@ export default class BoardLayer extends Layer {
     const foundLines = [];
     const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index });
     objs.forEach(obj => {
+      let changed = false;
       for (let i = 0; i < obj.lines.length; i++) {
         const line = obj.lines[i];
         if (this.toScreenX(line.x0) >= x && this.toScreenX(line.x0) <= x + width &&
@@ -383,9 +384,10 @@ export default class BoardLayer extends Layer {
           foundLines.push(line);
           obj.lines.splice(i, 1);
           i--;
+          changed = true;
         }
       }
-      Meteor.call('updateLines', obj._id, obj.lines);
+      if (changed) Meteor.call('updateLines', obj._id, obj.lines);
     });
     this.sel.lines = foundLines;
     this.sel.redraw();
