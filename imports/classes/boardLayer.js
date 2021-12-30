@@ -531,7 +531,11 @@ export default class BoardLayer extends Layer {
       if (ratio > 0.005 && ratio < 400) {
         this.ctx.strokeStyle = this.color;
         this.ctx.lineWidth = 1;
-        this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
+        if (j > 1 && Layer.dist(segment.lines[j - 1].x0, segment.lines[j - 1].y0, line.x0, line.y0) < 5) {
+          this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
+        } else {
+          this.ctx.moveTo(this.toScreenX(line.x0), this.toScreenY(line.y0));
+        }
         this.ctx.stroke();
       }
     }
