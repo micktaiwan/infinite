@@ -545,7 +545,7 @@ export default class BoardLayer extends Layer {
 
     Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(line => {
       const ratio = this.scale / line.scale;
-      if (this.notDrawingActionInProgress() || ratio > 2) this.drawPath(line);
+      if ((this.notDrawingActionInProgress() && !this.sel.selection) || ratio > 2) this.drawPath(line);
       else this.drawSLine(line);
     });
   }

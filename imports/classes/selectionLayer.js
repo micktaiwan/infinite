@@ -29,6 +29,8 @@ export default class SelectionLayer extends Layer {
     // console.log('up', event);
     if (event.key === 'z') this.stopPan();
     else if (event.key === 'a') this.stopZooming();
+    else if (event.key === 'e' && this.selection) this.clearSelection();
+    else if (event.key === 'Escape') this.cancelSelection();
   }
 
   onMouseMove(event) {
@@ -143,18 +145,30 @@ export default class SelectionLayer extends Layer {
         this.startPan(event);
         return;
       }
-      this.copyLinesToOriginLayer();
-      this.selection = undefined;
-      this.reset(false);
-      Meteor.defer(() => { // without this, setting zIndex does not work
-        this.manager.unfocusSelectionLayer();
-      });
+      this.cancelSelection();
     } else if (event.button === 2) {
       this.rightMouseDown = true;
       this.leftMouseDown = false;
       this.type = 3;
       this.startPan(event);
     }
+  }
+
+  clearSelection() {
+    this.lines = [];
+    this.selection = undefined;
+    this.selectionOriginLayer.redraw();
+    this.selectionOriginLayer = undefined;
+    this.reset(false);
+    this.redraw();
+    Meteor.defer(() => { // without this, setting zIndex does not work
+      this.manager.unfocusSelectionLayer();
+    });
+  }
+
+  cancelSelection() {
+    this.copyLinesToOriginLayer();
+    this.clearSelection();
   }
 
   copyLinesToOriginLayer() {
@@ -171,10 +185,6 @@ export default class SelectionLayer extends Layer {
       this.selectionOriginLayer.lines = this.lines.slice(i, i + 100);
       this.selectionOriginLayer.saveDrawings();
     }
-    this.selectionOriginLayer.redraw();
-    this.lines = [];
-    this.selectionOriginLayer = undefined;
-    this.redraw();
   }
 
   onMouseUp() {
@@ -255,6 +265,8 @@ export default class SelectionLayer extends Layer {
     this.offsetX -= unitsAddLeft;
     this.offsetY -= unitsAddTop;
 
+    this.scaleSelection();
+
     this.redraw();
   }
 
@@ -278,7 +290,30 @@ export default class SelectionLayer extends Layer {
     this.offsetX -= unitsAddLeft;
     this.offsetY -= unitsAddTop;
 
+    this.scaleSelection();
+
     this.redraw();
+  }
+
+  scaleSelection() {
+    let minX = this.selection.x;
+    let minY = this.selection.y;
+    let maxX = this.selection.x + this.selection.width;
+    let maxY = this.selection.y + this.selection.height;
+    this.lines.forEach(line => {
+      if (this.toScreenX(line.x0) < minX) minX = this.toScreenX(line.x0);
+      if (this.toScreenX(line.x1) < minX) minX = this.toScreenX(line.x1);
+      if (this.toScreenY(line.y0) < minY) minY = this.toScreenY(line.y0);
+      if (this.toScreenY(line.y1) < minY) minY = this.toScreenY(line.y1);
+      if (this.toScreenX(line.x0) > maxX) maxX = this.toScreenX(line.x0);
+      if (this.toScreenX(line.x1) > maxX) maxX = this.toScreenX(line.x1);
+      if (this.toScreenY(line.y0) > maxY) maxY = this.toScreenY(line.y0);
+      if (this.toScreenY(line.y1) > maxY) maxY = this.toScreenY(line.y1);
+    });
+    this.selection.x = minX;
+    this.selection.y = minY;
+    this.selection.width = maxX - minX;
+    this.selection.height = maxY - minY;
   }
 
   infos() {
