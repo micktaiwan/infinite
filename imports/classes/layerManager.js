@@ -126,6 +126,7 @@ export default class LayerManager {
   }
 
   redraw() {
+    this.selectionLayer.redraw();
     this.layers.forEach(layer => {
       layer.redraw();
     });

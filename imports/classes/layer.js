@@ -22,10 +22,6 @@ export default class Layer {
     this.ctx.lineCap = 'round';
     // this.ctx.lineJoin = 'round';
 
-    // distance from origin
-    this.offsetX = 0;
-    this.offsetY = 0;
-
     this.marginLeft = 50;
 
     // this.selCanvas = document.getElementById('selection');

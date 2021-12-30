@@ -13,7 +13,7 @@ export default class SelectionLayer extends Layer {
     this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), { passive: true });
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
     this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), { passive: true });
-    this.redraw();
+    // this.redraw();
   }
 
   onKeyDown(event) {
