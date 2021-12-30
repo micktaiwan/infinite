@@ -528,10 +528,10 @@ export default class BoardLayer extends Layer {
     for (let j = 0; j < segment.lines.length; j++) {
       const line = segment.lines[j];
       const ratio = this.scale / line.scale;
-      if (ratio > 0.005 && ratio < 400) {
+      if (ratio > 0.05 && ratio < 100) {
         this.ctx.strokeStyle = this.color;
         this.ctx.lineWidth = 1;
-        if (j > 1 && Layer.dist(segment.lines[j - 1].x0, segment.lines[j - 1].y0, line.x0, line.y0) < 5) {
+        if (j > 1 && Layer.dist(segment.lines[j - 1].x0, segment.lines[j - 1].y0, line.x0, line.y0) < 20) {
           this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
         } else {
           this.ctx.moveTo(this.toScreenX(line.x0), this.toScreenY(line.y0));
