@@ -91,27 +91,6 @@ Meteor.methods({
     return Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
 
-  stats() {
-    const stats = {};
-    Books.find({}).forEach(book => {
-      const bookId = book._id;
-      const lines = Lines.find({ bookId }).count();
-      const layers = Layers.find({ bookId }).count();
-      let max = 0;
-      const segments = Lines.find({ bookId }).map(line => {
-        if (line.lines.length > max) max = line.lines.length;
-        return line.lines.length;
-      }).reduce((a, b) => a + b, 0);
-      stats[bookId] = {
-        layers,
-        lines,
-        segments,
-        max,
-      };
-    });
-    return stats;
-  },
-
   toggleLayer(id, hidden) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     return Layers.update(id, { $set: { [`positions.${Meteor.userId()}.hidden`]: hidden } });
