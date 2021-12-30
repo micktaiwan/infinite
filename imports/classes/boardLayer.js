@@ -7,11 +7,12 @@ export default class BoardLayer extends Layer {
     this.hidden = false;
     if (fields.positions) {
       const p = fields.positions[this.userId];
-      if (!p) return;
-      if (p.scale !== undefined) this.scale = p.scale;
-      if (p.offsetX !== undefined) this.offsetX = p.offsetX;
-      if (p.offsetY !== undefined) this.offsetY = p.offsetY;
-      if (p.hidden !== undefined) this.hidden = p.hidden;
+      if (p) {
+        if (p.scale !== undefined) this.scale = p.scale;
+        if (p.offsetX !== undefined) this.offsetX = p.offsetX;
+        if (p.offsetY !== undefined) this.offsetY = p.offsetY;
+        if (p.hidden !== undefined) this.hidden = p.hidden;
+      }
     }
     this.pressure = 2;
     this.eraserSize = 40;
@@ -29,7 +30,7 @@ export default class BoardLayer extends Layer {
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
 
     const self = this;
-    this.observeChangesHandler = Lines.find({ bookId: this.bookId, layerIndex: this.index }).observeChanges({
+    this.observeChangesHandler = Lines.find({ bookId: self.bookId, layerIndex: self.index }).observeChanges({
       added: (id, line) => {
         if (line.userId !== self.userId) self.redraw();
       },

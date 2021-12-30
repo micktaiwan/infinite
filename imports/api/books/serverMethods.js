@@ -4,18 +4,18 @@ Meteor.methods({
 
   stats() {
     const stats = {};
-    Books.find({}).forEach(book => {
+    Books.find({ userIds: this.userId }).forEach(book => {
       const bookId = book._id;
-      const lines = Lines.find({ bookId }).count();
+      const lines = Lines.find({ bookId });
       const layers = Layers.find({ bookId }).count();
       let max = 0;
-      const segments = Lines.find({ bookId }).map(line => {
+      const segments = lines.map(line => {
         if (line.lines.length > max) max = line.lines.length;
         return line.lines.length;
       }).reduce((a, b) => a + b, 0);
       stats[bookId] = {
         layers,
-        lines,
+        lines: lines.count(),
         segments,
         max,
       };
