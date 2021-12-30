@@ -77,53 +77,6 @@ export default class SelectionLayer extends Layer {
 
     // if (event.pressure < 0.1) return;
 
-    if (this.erasing) {
-      // console.log('erasing');
-      this.drawEraser(this.cursorX, this.cursorY);
-      if (!this.leftMouseDown) return;
-
-      const self = this;
-      Meteor.defer(() => {
-        const size = self.pressure * self.eraserSize / 3;
-
-        const changes = [];
-        Lines.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
-        // console.log('eraser', self.drawings.length);
-          let changed = false;
-          const { lines } = entry;
-          for (let j = 0; j < lines.length; j++) {
-            const line = lines[j];
-            if (self.dist(line.x0, line.y0, scaledX, scaledY) < size ||
-            self.dist(line.x1, line.y1, scaledX, scaledY) < size) {
-              lines.splice(j, 1);
-              j--;
-              changed = true;
-              // TODO: split into 2 drawings if needed
-            }
-          }
-          if (changed) changes.push({ id: entry._id, lines });
-        });
-        if (changes.length > 0) Meteor.call('updateLinesBatch', changes);
-        self.prevCursorX = self.cursorX;
-        self.prevCursorY = self.cursorY;
-      });
-
-      return;
-    }
-
-    if (this.straightLine) {
-      this.sel.redraw();
-      this.drawLine(this.startX, this.startY, this.cursorX, this.cursorY, 2, this.color, this.selCtx);
-      return;
-    }
-
-    if (this.rectangle) {
-      this.sel.redraw();
-      this.selCtx.strokeStyle = '#000';
-      this.selCtx.strokeRect(this.startX, this.startY, this.cursorX - this.startX, this.cursorY - this.startY);
-      return;
-    }
-
     if (this.rectSelection) {
       // console.log('sel');
       // this.hasMoved = true;
