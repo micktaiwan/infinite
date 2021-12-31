@@ -6,18 +6,11 @@ Meteor.methods({
     const stats = {};
     Books.find({ userIds: this.userId }).forEach(book => {
       const bookId = book._id;
-      const lines = Drawings.find({ bookId });
+      const drawings = Drawings.find({ bookId }).count();
       const layers = Layers.find({ bookId }).count();
-      let max = 0;
-      const segments = lines.map(line => {
-        if (line.lines.length > max) max = line.lines.length;
-        return line.lines.length;
-      }).reduce((a, b) => a + b, 0);
       stats[bookId] = {
         layers,
-        lines: lines.count(),
-        segments,
-        max,
+        drawings,
       };
     });
     return stats;
@@ -27,21 +20,21 @@ Meteor.methods({
     // for each lines, split into segments of 100 smaller lines
     let order = 0;
     let count = 0;
-    Drawings.find({}, { sort: { order: 1 } }).forEach(line => {
+    Drawings.find({ type: 'lines' }, { sort: { order: 1 } }).forEach(drawing => {
       count++;
       // if (count % 1000 === 0) { console.log(count); }
-      const { lines } = line;
+      const { lines } = drawing;
       for (let i = 0; i < lines.length; i += 100) {
         order++;
         Drawings.insert({
-          bookId: line.bookId,
-          layerIndex: line.layerIndex,
+          bookId: drawing.bookId,
+          layerIndex: drawing.layerIndex,
           order,
           lines: lines.slice(i, i + 100),
-          userId: line.userId,
+          userId: drawing.userId,
         });
       }
-      Drawings.remove(line._id);
+      Drawings.remove(drawing._id);
     });
     console.log(`optimized ${count} lines`);
   },

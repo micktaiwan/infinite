@@ -1,3 +1,5 @@
+import Helpers from './helpers';
+
 export default class Layer {
   constructor(manager, _id, fields) {
     this._id = _id;
@@ -56,7 +58,7 @@ export default class Layer {
   }
 
   dist(x1, y1, x2, y2, atScale = true) {
-    return Layer.dist(x1, y1, x2, y2) * (atScale ? this.scale : 1);
+    return Helpers.dist(x1, y1, x2, y2) * (atScale ? this.scale : 1);
   }
 
   // lineInsideSelection(line) {
@@ -159,10 +161,6 @@ export default class Layer {
   onMouseWheel(event) {
     if (this.hidden) return;
     this.wheelZoom(event);
-  }
-
-  static dist(x1, y1, x2, y2) {
-    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
   }
 }
 

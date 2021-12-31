@@ -1,5 +1,6 @@
 import Brush from './brush';
 import { Drawings } from '../../api/books/collections';
+import Helpers from '../helpers';
 
 export default class LinesBrush extends Brush {
   constructor(layer) {
@@ -60,21 +61,21 @@ export default class LinesBrush extends Brush {
   drawPath(drawing) {
     if (drawing.lines.length === 0) return;
     // this.ctx.lineWidth = line.pressure * ratio;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.toScreenX(drawing.lines[0].x0), this.toScreenY(drawing.lines[0].y0));
+    this.layer.ctx.beginPath();
+    this.layer.ctx.moveTo(this.layer.toScreenX(drawing.lines[0].x0), this.layer.toScreenY(drawing.lines[0].y0));
 
     for (let j = 0; j < drawing.lines.length; j++) {
       const line = drawing.lines[j];
-      const ratio = this.scale / line.scale;
+      const ratio = this.layer.scale / line.scale;
       if (ratio > 0.05 && ratio < 100) {
-        this.ctx.strokeStyle = this.color;
-        this.ctx.lineWidth = 1;
-        if (j > 1 && Layer.dist(drawing.lines[j - 1].x0, drawing.lines[j - 1].y0, line.x0, line.y0) < 20) {
-          this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
+        this.layer.ctx.strokeStyle = this.color;
+        this.layer.ctx.lineWidth = 1;
+        if (j > 1 && Helpers.dist(drawing.lines[j - 1].x0, drawing.lines[j - 1].y0, line.x0, line.y0) < 20) {
+          this.layer.ctx.lineTo(this.layer.toScreenX(line.x1), this.layer.toScreenY(line.y1));
         } else {
-          this.ctx.moveTo(this.toScreenX(line.x0), this.toScreenY(line.y0));
+          this.layer.ctx.moveTo(this.layer.toScreenX(line.x0), this.layer.toScreenY(line.y0));
         }
-        this.ctx.stroke();
+        this.layer.ctx.stroke();
       }
     }
   }
@@ -83,5 +84,21 @@ export default class LinesBrush extends Brush {
     if (!this.lines.length) return;
     Meteor.call('saveDrawings', { type: this.type, lines: this.lines, layerIndex: this.layer.index, bookId: this.layer.bookId });
     this.lines = [];
+  }
+
+  erase(entry, x, y, size, changes) {
+    let changed = false;
+    const { lines } = entry;
+    for (let j = 0; j < lines.length; j++) {
+      const line = lines[j];
+      if (this.layer.dist(line.x0, line.y0, x, y) < size ||
+      this.layer.dist(line.x1, line.y1, x, y) < size) {
+        lines.splice(j, 1);
+        j--;
+        changed = true;
+        // TODO: split into 2 drawings if needed
+      }
+    }
+    if (changed) changes.push({ id: entry._id, obj: { lines } });
   }
 }

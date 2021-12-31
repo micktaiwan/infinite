@@ -2,6 +2,8 @@ import Layer from './layer';
 import { Drawings } from '../api/books/collections';
 import LinesBrush from './brushes/lines';
 
+import Helpers from './helpers';
+
 export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
@@ -33,7 +35,7 @@ export default class BoardLayer extends Layer {
       added: (id, drawing) => {
         if (drawing.userId !== self.userId) self.redraw();
       },
-      changed: (id, xfields) => {
+      changed: (id, doc) => {
         const drawing = Drawings.findOne(id);
         if (drawing.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
@@ -131,26 +133,14 @@ export default class BoardLayer extends Layer {
         const size = self.pressure * self.eraserSize / 3;
 
         const changes = [];
-        Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
-        // console.log('eraser', self.drawings.length);
-          let changed = false;
-          const { lines } = entry;
-          for (let j = 0; j < lines.length; j++) {
-            const line = lines[j];
-            if (self.dist(line.x0, line.y0, scaledX, scaledY) < size ||
-            self.dist(line.x1, line.y1, scaledX, scaledY) < size) {
-              lines.splice(j, 1);
-              j--;
-              changed = true;
-              // TODO: split into 2 drawings if needed
-            }
-          }
-          if (changed) changes.push({ id: entry._id, lines });
+        Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
+          // TODO: depends on drawing.type
+          this.brush.erase(drawing, scaledX, scaledY, size, changes);
         });
         if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
-        self.prevCursorX = self.cursorX;
-        self.prevCursorY = self.cursorY;
       });
+      self.prevCursorX = self.cursorX;
+      self.prevCursorY = self.cursorY;
 
       return;
     }

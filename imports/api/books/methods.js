@@ -68,11 +68,11 @@ Meteor.methods({
 
   updateDrawingsBatch(changes) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
-    changes.forEach(({ id, lines }) => {
-      if (lines.length === 0) {
+    changes.forEach(({ id, obj }) => {
+      if (obj.lines && obj.lines.length === 0) { // TODO: logic should be in brushes
         Drawings.remove(id);
       } else {
-        Drawings.update(id, { $set: { lines } });
+        Drawings.update(id, { $set: obj });
       }
     });
   },
