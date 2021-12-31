@@ -8,7 +8,7 @@ export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
     this.hidden = false;
-    this.brush = new LinesBrush(this);
+    this.brush = manager.brushes.lines;
     if (fields.positions) {
       const p = fields.positions[this.userId];
       if (p) {
@@ -54,7 +54,6 @@ export default class BoardLayer extends Layer {
   onKeyDown(event) {
     if (this.hidden) return;
     if (event.repeat) return;
-    // console.log('down', this.index);
     if (event.key === 'z' && (event.metaKey || event.ctrlKey)) this.undo();
     else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
@@ -68,9 +67,7 @@ export default class BoardLayer extends Layer {
   onKeyUp(event) {
     if (this.hidden) return;
     if (event.repeat) return;
-    // console.log('up', event);
     if (event.key === 'z') this.stopPan();
-    else if (event.key === '+') this.zoomStep(1.2);
     else if (event.key === 'a') this.stopZooming();
     else if (event.key === 'e') this.stopEraser();
     else if (event.key === 'd') this.stopStraightLine();
@@ -115,7 +112,6 @@ export default class BoardLayer extends Layer {
     }
 
     if (this.erasing) {
-      // console.log('erasing');
       this.drawEraser(this.cursorX, this.cursorY);
       if (!this.leftMouseDown) return;
 
@@ -126,7 +122,7 @@ export default class BoardLayer extends Layer {
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
           // TODO: depends on drawing.type
-          this.brush.erase(drawing, scaledX, scaledY, size, changes);
+          this.brush.eraseCircle(drawing, scaledX, scaledY, size, changes);
         });
         if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
       });
@@ -150,8 +146,6 @@ export default class BoardLayer extends Layer {
     }
 
     if (this.rectSelection) {
-      // console.log('sel');
-      // this.hasMoved = true;
       this.sel.redraw();
       this.selCtx.lineWidth = 1;
       this.selCtx.strokeStyle = '#f90';
@@ -160,21 +154,13 @@ export default class BoardLayer extends Layer {
     }
 
     // drawing
-    if (this.leftMouseDown) {
-      this.type = 1;
-
-      this.brush.draw();
-
-      // console.log('move',cursorX, cursorY);
-    }
+    if (this.leftMouseDown) this.brush.draw(this);
 
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;
-    // this.oldTimer = this.timer;
   }
 
   onMouseDown(event) {
-    // console.log('down', this);
     if (this.hidden) return;
 
     this.updateCursorPos(event);
@@ -183,11 +169,9 @@ export default class BoardLayer extends Layer {
     if (event.button === 0) { // left
       this.leftMouseDown = true;
       this.rightMouseDown = false;
-      this.type = 0;
     } else if (event.button === 2) { // right
       this.rightMouseDown = true;
       this.leftMouseDown = false;
-      this.type = 3;
       this.startPan(event);
     }
   }
@@ -197,7 +181,6 @@ export default class BoardLayer extends Layer {
 
     this.leftMouseDown = false;
     this.rightMouseDown = false;
-    this.type = 2;
     this.saveDrawings();
     if (this.panning) this.stopPan();
   }
@@ -234,7 +217,6 @@ export default class BoardLayer extends Layer {
       x1: this.toTrueX(this.cursorX),
       y1: this.toTrueY(this.cursorY),
       color: this.color,
-      // type: this.type,
     });
     this.saveDrawings();
     this.redraw();
@@ -342,31 +324,21 @@ export default class BoardLayer extends Layer {
     const { x, y, width, height } = this.sel.selection;
     const foundDrawings = [];
     const objs = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
-    objs.forEach(obj => {
-      let changed = false;
-      for (let i = 0; i < obj.lines.length; i++) {
-        const line = obj.lines[i];
-        if (this.toScreenX(line.x0) >= x && this.toScreenX(line.x0) <= x + width &&
-            this.toScreenY(line.y0) >= y && this.toScreenY(line.y0) <= y + height) {
-          foundDrawings.push(line);
-          obj.lines.splice(i, 1);
-          i--;
-          changed = true;
-        }
-      }
-      if (changed) Meteor.call('updateDrawings', obj._id, obj.lines);
+    objs.forEach(drawing => {
+      const changed = this.brush.eraseRectangle(drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
+      if (changed) Meteor.call('updateDrawingsBatch', foundDrawings);
     });
-    this.sel.lines = foundDrawings;
-    this.sel.redraw();
+    this.sel.drawings = foundDrawings.map(f => f.drawings);
     this.redraw();
+    this.sel.redraw();
   }
 
   savePosition() {
     Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
   }
 
-  saveDrawings(forceSave = false) {
-    this.brush.saveDrawings(forceSave);
+  saveDrawings() {
+    this.brush.saveDrawings(this);
   }
 
   reset(redraw = true) {
@@ -396,12 +368,6 @@ export default class BoardLayer extends Layer {
       this.ctx.fill();
       this.ctx.closePath();
     }
-  }
-
-  zoomStep(step) {
-    console.log(step);
-    this.scale *= step;
-    this.redraw();
   }
 
   undo() {
@@ -464,12 +430,11 @@ export default class BoardLayer extends Layer {
   }
 
   draw() {
-    // console.log('draw', this.index);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
 
     Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
-      if (drawing.type === 'lines') this.brush.drawing(drawing);
+      if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
       else console.log('unknown drawing type', drawing.type);
     });
   }

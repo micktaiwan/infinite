@@ -26,7 +26,6 @@ export default class SelectionLayer extends Layer {
   onKeyUp(event) {
     if (this.hidden) return;
     if (event.repeat) return;
-    // console.log('up', event);
     if (event.key === 'z') this.stopPan();
     else if (event.key === 'a') this.stopZooming();
     else if (event.key === 'e' && this.selection) this.clearSelection();
@@ -68,13 +67,7 @@ export default class SelectionLayer extends Layer {
       return;
     }
 
-    // console.log(this.pressure);
-
-    // if (event.pressure < 0.1) return;
-
     if (this.rectSelection) {
-      // console.log('sel');
-      // this.hasMoved = true;
       this.sel.redraw();
       this.selCtx.lineWidth = 1;
       this.selCtx.strokeStyle = '#f90';
@@ -91,19 +84,18 @@ export default class SelectionLayer extends Layer {
     if (event.button === 0) {
       if (this.insideSelection(this.cursorX, this.cursorY)) {
         this.startPan(event);
-        return;
+      } else {
+        this.cancelSelection();
       }
-      this.cancelSelection();
     } else if (event.button === 2) {
       this.rightMouseDown = true;
       this.leftMouseDown = false;
-      this.type = 3;
       this.startPan(event);
     }
   }
 
   clearSelection() {
-    this.lines = [];
+    this.drawings = [];
     this.selection = undefined;
     this.selectionOriginLayer.redraw();
     this.selectionOriginLayer = undefined;
@@ -120,30 +112,32 @@ export default class SelectionLayer extends Layer {
   }
 
   copyDrawingsToOriginLayer() {
-    this.lines.forEach(line => {
-      line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
-      line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
-      line.x1 = this.selectionOriginLayer.toTrueX(this.scale * (line.x1 + this.offsetX));
-      line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
-      line.scale /= this.scale / this.selectionOriginLayer.scale;
+    this.drawings.forEach(drawing => {
+      this.selectionOriginLayer.brush = this.manager.brushes[drawing.type];
+      if (drawing.type === 'lines') {
+        drawing.lines.forEach(line => {
+          line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
+          line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
+          line.x1 = this.selectionOriginLayer.toTrueX(this.scale * (line.x1 + this.offsetX));
+          line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
+          line.scale /= this.scale / this.selectionOriginLayer.scale;
+        });
+        // split lines by group of 100 and saveDrawings
+        for (let i = 0; i < drawing.lines.length; i += 100) {
+          this.selectionOriginLayer.brush.lines = drawing.lines.slice(i, i + 100);
+          this.selectionOriginLayer.saveDrawings();
+        }
+      }
     });
-
-    // split lines by group of 100 and saveDrawings
-    for (let i = 0; i < this.lines.length; i += 100) {
-      this.selectionOriginLayer.lines = this.lines.slice(i, i + 100);
-      this.selectionOriginLayer.saveDrawings();
-    }
   }
 
   onMouseUp() {
     if (this.panning) this.stopPan();
     this.leftMouseDown = false;
     this.rightMouseDown = false;
-    this.type = 2;
   }
 
   redraw() {
-    // console.log('redraw selection');
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (!this.selectionOriginLayer) this.drawTemplate();
     this.drawSelectedDrawings();
@@ -165,19 +159,12 @@ export default class SelectionLayer extends Layer {
 
   drawSelectedDrawings() {
     if (!this.selectionOriginLayer) return;
-    for (let j = 0; j < this.lines.length; j++) {
-      const line = this.lines[j];
-      const ratio = this.scale / line.scale;
-      this.drawLine(
-        this.toScreenX(line.x0),
-        this.toScreenY(line.y0),
-        this.toScreenX(line.x1),
-        this.toScreenY(line.y1),
-        line.pressure * ratio,
-        '#f90',
-        this.ctx,
-      );
-    }
+    this.drawings.forEach(drawing => {
+      drawing.color = '#f90';
+      if (drawing.type === 'lines') {
+        this.manager.brushes.lines.drawing(drawing, this);
+      } else console.log('unknown drawing type', drawing.type);
+    });
   }
 
   drawSelectionBoundaries() {
@@ -244,6 +231,7 @@ export default class SelectionLayer extends Layer {
   }
 
   scaleSelection() {
+    // TODO
     let minX = this.selection.x;
     let minY = this.selection.y;
     let maxX = this.selection.x + this.selection.width;

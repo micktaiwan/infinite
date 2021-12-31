@@ -6,8 +6,4 @@ export default class Brush {
     this.maxSize = 3;
     this.minSensitivity = 0.1;
   }
-
-  draw() {
-    console.log('Brush: draw', this.name);
-  }
 }

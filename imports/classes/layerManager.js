@@ -1,6 +1,7 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
 import { Random } from 'meteor/random';
+import LinesBrush from './brushes/lines';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../api/books/collections';
@@ -16,7 +17,6 @@ export default class LayerManager {
   }
 
   init(bookId) {
-    // console.log('LayerManager: init. bookId:', bookId, 'this.id:', this.id);
     this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
@@ -26,6 +26,9 @@ export default class LayerManager {
     this.rightMouseDown = false;
 
     this.layers = [];
+    this.brushes = {
+      lines: new LinesBrush(),
+    };
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
 
@@ -36,7 +39,6 @@ export default class LayerManager {
     const self = this;
     this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
       added: (_id, fields) => {
-        // console.log('LayerManager: added', id, fields);
         self.dimOpacityForAllLayers();
         self.layers.push(new BoardLayer(self, _id, fields));
         if (!self.initializing) self.focus(fields.index);
@@ -52,6 +54,15 @@ export default class LayerManager {
     this.initializing = false;
 
     window.addEventListener('resize', () => this.redraw());
+  }
+
+  brushForType(type) {
+    switch (type) {
+      case 'lines':
+        return this.manager.brushes.lines;
+      default:
+        return undefined;
+    }
   }
 
   toggleLayer() {
@@ -83,7 +94,6 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
-    // console.log('LayerManager: focusCurrentLayerCanvas', this.currentLayer);
     this.layers[this.currentLayer].focusCanvas();
   }
 
@@ -95,7 +105,6 @@ export default class LayerManager {
   }
 
   focus(index) {
-    // console.log('LayerManager: focus', index);
     if (index < 0) return;
     this.currentLayer = index;
     this.dimOpacityForAllLayers();
