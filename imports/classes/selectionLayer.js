@@ -125,8 +125,8 @@ export default class SelectionLayer extends Layer {
         });
         // split lines by group of 100
         for (let i = 0; i < drawing.lines.length; i += 100) {
-          this.manager.brushes.lines = drawing.lines.slice(i, i + 100);
-          this.manager.brushes.brush.saveDrawings(this.selectionOriginLayer);
+          this.manager.brushes.lines.lines = drawing.lines.slice(i, i + 100);
+          this.manager.brushes.lines.saveDrawings(this.selectionOriginLayer);
         }
       }
     });
