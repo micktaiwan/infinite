@@ -317,9 +317,12 @@ export default class BoardLayer extends Layer {
       width: this.cursorX - this.startX,
       height: this.cursorY - this.startY,
     };
-    this.canvas.style.cursor = 'default';
-    this.copyDrawingsToSelection();
-    this.manager.focusSelectionLayer();
+    this.canvas.style.cursor = 'wait';
+    Meteor.defer(() => {
+      this.copyDrawingsToSelection();
+      this.manager.focusSelectionLayer();
+      this.canvas.style.cursor = 'default';
+    });
   }
 
   copyDrawingsToSelection() {
@@ -329,9 +332,9 @@ export default class BoardLayer extends Layer {
     const foundDrawings = [];
     const objs = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
     objs.forEach(drawing => {
-      const changed = this.brush.eraseRectangle(drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
-      if (changed) Meteor.call('updateDrawingsBatch', foundDrawings);
+      if (drawing.type === 'lines') this.manager.brushes.lines.eraseRectangle(drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
     });
+    if (foundDrawings.length) Meteor.call('updateDrawingsBatch', foundDrawings);
     this.sel.drawings = foundDrawings.map(f => f.drawings);
     this.redraw();
     this.sel.redraw();
