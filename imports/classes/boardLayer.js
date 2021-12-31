@@ -87,15 +87,10 @@ export default class BoardLayer extends Layer {
 
     // with a pointer, move is triggered also with a tilt
     if (this.cursorX === this.prevCursorX && this.cursorY === this.prevCursorY) return;
-    // console.log('move', this.index);
 
     const scaledX = this.toTrueX(this.cursorX);
     const scaledY = this.toTrueY(this.cursorY);
-    const prevScaledX = this.toTrueX(this.prevCursorX);
-    const prevScaledY = this.toTrueY(this.prevCursorY);
-
     this.pressure = event.pressure * 3;
-
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
     if (this.zooming) {
@@ -118,10 +113,6 @@ export default class BoardLayer extends Layer {
       }
       return;
     }
-
-    // console.log(this.pressure);
-
-    // if (event.pressure < 0.1) return;
 
     if (this.erasing) {
       // console.log('erasing');
@@ -303,6 +294,7 @@ export default class BoardLayer extends Layer {
 
   startEraser() {
     this.erasing = true;
+    this.drawEraser(this.cursorX, this.cursorY);
   }
 
   stopEraser() {

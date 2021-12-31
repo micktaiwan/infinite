@@ -151,9 +151,11 @@ export default class Layer {
     this.startY = this.cursorY;
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;
+    this.canvas.style.cursor = 'zoom-in';
   }
 
   stopZooming() {
+    this.canvas.style.cursor = 'default';
     this.zooming = false;
     this.redraw();
   }
