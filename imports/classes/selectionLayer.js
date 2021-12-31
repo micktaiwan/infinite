@@ -115,6 +115,7 @@ export default class SelectionLayer extends Layer {
     this.drawings.forEach(drawing => {
       this.selectionOriginLayer.brush = this.manager.brushes[drawing.type];
       if (drawing.type === 'lines') {
+        // TODO: should be in LinesBrush
         drawing.lines.forEach(line => {
           line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
           line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
@@ -122,10 +123,10 @@ export default class SelectionLayer extends Layer {
           line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
           line.scale /= this.scale / this.selectionOriginLayer.scale;
         });
-        // split lines by group of 100 and saveDrawings
+        // split lines by group of 100
         for (let i = 0; i < drawing.lines.length; i += 100) {
-          this.selectionOriginLayer.brush.lines = drawing.lines.slice(i, i + 100);
-          this.selectionOriginLayer.saveDrawings();
+          this.manager.brushes.lines = drawing.lines.slice(i, i + 100);
+          this.manager.brushes.brush.saveDrawings(this.selectionOriginLayer);
         }
       }
     });
@@ -231,20 +232,24 @@ export default class SelectionLayer extends Layer {
   }
 
   scaleSelection() {
-    // TODO
     let minX = this.selection.x;
     let minY = this.selection.y;
     let maxX = this.selection.x + this.selection.width;
     let maxY = this.selection.y + this.selection.height;
-    this.lines.forEach(line => {
-      if (this.toScreenX(line.x0) < minX) minX = this.toScreenX(line.x0);
-      if (this.toScreenX(line.x1) < minX) minX = this.toScreenX(line.x1);
-      if (this.toScreenY(line.y0) < minY) minY = this.toScreenY(line.y0);
-      if (this.toScreenY(line.y1) < minY) minY = this.toScreenY(line.y1);
-      if (this.toScreenX(line.x0) > maxX) maxX = this.toScreenX(line.x0);
-      if (this.toScreenX(line.x1) > maxX) maxX = this.toScreenX(line.x1);
-      if (this.toScreenY(line.y0) > maxY) maxY = this.toScreenY(line.y0);
-      if (this.toScreenY(line.y1) > maxY) maxY = this.toScreenY(line.y1);
+    // TODO: should be in LinesBrush
+    this.drawings.forEach(drawing => {
+      if (drawing.type === 'lines') {
+        drawing.lines.forEach(line => {
+          if (this.toScreenX(line.x0) < minX) minX = this.toScreenX(line.x0);
+          if (this.toScreenX(line.x1) < minX) minX = this.toScreenX(line.x1);
+          if (this.toScreenY(line.y0) < minY) minY = this.toScreenY(line.y0);
+          if (this.toScreenY(line.y1) < minY) minY = this.toScreenY(line.y1);
+          if (this.toScreenX(line.x0) > maxX) maxX = this.toScreenX(line.x0);
+          if (this.toScreenX(line.x1) > maxX) maxX = this.toScreenX(line.x1);
+          if (this.toScreenY(line.y0) > maxY) maxY = this.toScreenY(line.y0);
+          if (this.toScreenY(line.y1) > maxY) maxY = this.toScreenY(line.y1);
+        });
+      }
     });
     this.selection.x = minX;
     this.selection.y = minY;

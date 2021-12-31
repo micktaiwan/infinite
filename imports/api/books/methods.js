@@ -69,7 +69,7 @@ Meteor.methods({
   updateDrawingsBatch(changes) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     changes.forEach(({ id, type, $set }) => {
-      if (type === 'removed') { // TODO: logic should be in brushes
+      if (type === 'removed') {
         Drawings.remove(id);
       } else {
         Drawings.update(id, { $set });
