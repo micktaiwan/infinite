@@ -118,11 +118,11 @@ export default class BoardLayer extends Layer {
       const self = this;
       Meteor.defer(() => {
         const size = self.pressure * self.eraserSize / 3;
-
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
-          // TODO: depends on drawing.type
-          this.brush.eraseCircle(drawing, scaledX, scaledY, size, changes);
+          if (drawing.type === 'lines') {
+            this.manager.brushes.lines.eraseCircle(drawing, scaledX, scaledY, size / this.scale, changes);
+          }
         });
         if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
       });
@@ -358,15 +358,15 @@ export default class BoardLayer extends Layer {
       this.selCtx.strokeStyle = '#555';
       this.selCtx.beginPath();
       this.selCtx.arc(x, y, this.eraserSize, 0, 2 * Math.PI);
-      this.selCtx.stroke();
       this.selCtx.closePath();
+      this.selCtx.stroke();
     } else {
       this.sel.redraw();
       this.ctx.fillStyle = '#fff';
       this.ctx.beginPath();
       this.ctx.arc(x, y, size, 0, 2 * Math.PI);
-      this.ctx.fill();
       this.ctx.closePath();
+      this.ctx.fill();
     }
   }
 

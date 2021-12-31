@@ -152,9 +152,9 @@ export default class SelectionLayer extends Layer {
     for (let i = 0; i < this.canvas.height; i += 30) {
       this.ctx.moveTo(0, i);
       this.ctx.lineTo(this.canvas.width, i);
-      this.ctx.stroke();
     }
     this.ctx.closePath();
+    this.ctx.stroke();
   }
 
   drawSelectedDrawings() {

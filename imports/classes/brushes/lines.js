@@ -77,6 +77,7 @@ export default class LinesBrush extends Brush {
         layer.ctx.stroke();
       }
     }
+    layer.ctx.closePath();
   }
 
   saveDrawings(layer) {
@@ -92,12 +93,11 @@ export default class LinesBrush extends Brush {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (Helpers.dist(line.x0, line.y0, x, y) < size ||
-      Helpers.dist(line.x1, line.y1, x, y) < size) {
-        lines.splice(i, 1);
+          Helpers.dist(line.x1, line.y1, x, y) < size) {
         foundLines.push(line);
+        lines.splice(i, 1);
         i--;
         changed = true;
-        // TODO: split into 2 drawings if needed
       }
     }
     if (changed) {
