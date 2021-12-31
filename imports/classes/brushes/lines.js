@@ -17,8 +17,7 @@ export default class LinesBrush extends Brush {
     const prevScaledX = layer.toTrueX(layer.prevCursorX);
     const prevScaledY = layer.toTrueY(layer.prevCursorY);
 
-    // add the line to our drawing history
-    this.lines.push({
+    this.straitLine(layer, {
       scale: layer.scale,
       pressure: layer.pressure,
       x0: prevScaledX,
@@ -27,8 +26,10 @@ export default class LinesBrush extends Brush {
       y1: scaledY,
       color: layer.color,
     });
+  }
 
-    // draw a line
+  straitLine(layer, line) {
+    this.lines.push(line);
     layer.drawLine(layer.prevCursorX, layer.prevCursorY, layer.cursorX, layer.cursorY, layer.pressure, layer.color);
   }
 

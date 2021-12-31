@@ -141,6 +141,7 @@ export default class BoardLayer extends Layer {
     if (this.rectangle) {
       this.sel.redraw();
       this.selCtx.strokeStyle = '#000';
+      this.selCtx.lineWidth = 2;
       this.selCtx.strokeRect(this.startX, this.startY, this.cursorX - this.startX, this.cursorY - this.startY);
       return;
     }
@@ -209,15 +210,18 @@ export default class BoardLayer extends Layer {
 
   stopStraightLine() {
     this.straightLine = false;
-    this.lines.push({
-      scale: this.scale,
-      pressure: 2,
-      x0: this.toTrueX(this.startX),
-      y0: this.toTrueY(this.startY),
-      x1: this.toTrueX(this.cursorX),
-      y1: this.toTrueY(this.cursorY),
-      color: this.color,
-    });
+    this.manager.brushes.lines.straitLine(
+      this,
+      {
+        scale: this.scale,
+        pressure: 2,
+        x0: this.toTrueX(this.startX),
+        y0: this.toTrueY(this.startY),
+        x1: this.toTrueX(this.cursorX),
+        y1: this.toTrueY(this.cursorY),
+        color: this.color,
+      },
+    );
     this.saveDrawings();
     this.redraw();
     this.sel.redraw();
@@ -233,7 +237,7 @@ export default class BoardLayer extends Layer {
 
   stopRectangle() {
     this.rectangle = false;
-    this.lines.push({
+    this.manager.brushes.lines.straitLine(this, {
       scale: this.scale,
       pressure: 2,
       x0: this.toTrueX(this.startX),
@@ -242,7 +246,7 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.startY),
       color: this.color,
     });
-    this.lines.push({
+    this.manager.brushes.lines.straitLine(this, {
       scale: this.scale,
       pressure: 2,
       x0: this.toTrueX(this.cursorX),
@@ -251,7 +255,7 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.cursorY),
       color: this.color,
     });
-    this.lines.push({
+    this.manager.brushes.lines.straitLine(this, {
       scale: this.scale,
       pressure: 2,
       x0: this.toTrueX(this.cursorX),
@@ -260,7 +264,7 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.cursorY),
       color: this.color,
     });
-    this.lines.push({
+    this.manager.brushes.lines.straitLine(this, {
       scale: this.scale,
       pressure: 2,
       x0: this.toTrueX(this.startX),
