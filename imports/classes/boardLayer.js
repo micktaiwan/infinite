@@ -76,6 +76,11 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseMove(event) {
+    const events = event.getCoalescedEvents();
+    for (let i = 0; i < events.length; i++) this.onMovement(events[i]);
+  }
+
+  onMovement(event) {
     if (this.hidden) return;
 
     // get mouse position
