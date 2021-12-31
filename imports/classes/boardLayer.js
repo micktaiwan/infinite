@@ -1,10 +1,12 @@
 import Layer from './layer';
-import { Lines } from '../api/books/collections';
+import { Drawings } from '../api/books/collections';
+import LinesBrush from './brushes/lines';
 
 export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
     this.hidden = false;
+    this.brush = new LinesBrush(this);
     if (fields.positions) {
       const p = fields.positions[this.userId];
       if (p) {
@@ -14,9 +16,6 @@ export default class BoardLayer extends Layer {
         if (p.hidden !== undefined) this.hidden = p.hidden;
       }
     }
-    this.pressure = 2;
-    this.eraserSize = 40;
-    this.color = '#000';
 
     this.sel = this.manager.selectionLayer;
     this.selCtx = this.manager.selectionLayer.ctx;
@@ -30,16 +29,16 @@ export default class BoardLayer extends Layer {
     this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
 
     const self = this;
-    this.observeChangesHandler = Lines.find({ bookId: self.bookId, layerIndex: self.index }).observeChanges({
-      added: (id, line) => {
-        if (line.userId !== self.userId) self.redraw();
+    this.observeChangesHandler = Drawings.find({ bookId: self.bookId, layerIndex: self.index }).observeChanges({
+      added: (id, drawing) => {
+        if (drawing.userId !== self.userId) self.redraw();
       },
       changed: (id, xfields) => {
-        const line = Lines.findOne(id);
-        if (line.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
+        const drawing = Drawings.findOne(id);
+        if (drawing.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
       removed: id => {
-        if (!self.sel.selectionOriginLayer && !Lines.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
+        if (!self.sel.selectionOriginLayer && !Drawings.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
         if (!self.notDrawingActionInProgress()) self.redraw();
       },
     });
@@ -132,7 +131,7 @@ export default class BoardLayer extends Layer {
         const size = self.pressure * self.eraserSize / 3;
 
         const changes = [];
-        Lines.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
+        Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(entry => {
         // console.log('eraser', self.drawings.length);
           let changed = false;
           const { lines } = entry;
@@ -148,7 +147,7 @@ export default class BoardLayer extends Layer {
           }
           if (changed) changes.push({ id: entry._id, lines });
         });
-        if (changes.length > 0) Meteor.call('updateLinesBatch', changes);
+        if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
         self.prevCursorX = self.cursorX;
         self.prevCursorY = self.cursorY;
       });
@@ -181,23 +180,9 @@ export default class BoardLayer extends Layer {
 
     // drawing
     if (this.leftMouseDown) {
-      const color = '#000';
       this.type = 1;
 
-      // add the line to our drawing history
-      this.lines.push({
-        scale: this.scale,
-        pressure: this.pressure,
-        x0: prevScaledX,
-        y0: prevScaledY,
-        x1: scaledX,
-        y1: scaledY,
-        color,
-        // type: this.type,
-      });
-
-      // draw a line
-      this.drawLine(this.prevCursorX, this.prevCursorY, this.cursorX, this.cursorY, this.pressure, color);
+      this.brush.draw();
 
       // console.log('move',cursorX, cursorY);
     }
@@ -365,31 +350,31 @@ export default class BoardLayer extends Layer {
       height: this.cursorY - this.startY,
     };
     this.canvas.style.cursor = 'default';
-    this.copyLinesToSelection();
+    this.copyDrawingsToSelection();
     this.manager.focusSelectionLayer();
   }
 
-  copyLinesToSelection() {
+  copyDrawingsToSelection() {
     this.sel.copyPosition(this);
     this.sel.selectionOriginLayer = this;
     const { x, y, width, height } = this.sel.selection;
-    const foundLines = [];
-    const objs = Lines.find({ bookId: this.bookId, layerIndex: this.index });
+    const foundDrawings = [];
+    const objs = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
     objs.forEach(obj => {
       let changed = false;
       for (let i = 0; i < obj.lines.length; i++) {
         const line = obj.lines[i];
         if (this.toScreenX(line.x0) >= x && this.toScreenX(line.x0) <= x + width &&
             this.toScreenY(line.y0) >= y && this.toScreenY(line.y0) <= y + height) {
-          foundLines.push(line);
+          foundDrawings.push(line);
           obj.lines.splice(i, 1);
           i--;
           changed = true;
         }
       }
-      if (changed) Meteor.call('updateLines', obj._id, obj.lines);
+      if (changed) Meteor.call('updateDrawings', obj._id, obj.lines);
     });
-    this.sel.lines = foundLines;
+    this.sel.lines = foundDrawings;
     this.sel.redraw();
     this.redraw();
   }
@@ -399,11 +384,7 @@ export default class BoardLayer extends Layer {
   }
 
   saveDrawings(forceSave = false) {
-    if (this.lines.length) forceSave = true;
-    if (!forceSave) return;
-    this.forceSave = false;
-    Meteor.call('saveLines', { lines: this.lines, layerIndex: this.index, bookId: this.bookId });
-    this.lines = [];
+    this.brush.saveDrawings(forceSave);
   }
 
   reset(redraw = true) {
@@ -500,54 +481,14 @@ export default class BoardLayer extends Layer {
     }, 200);
   }
 
-  drawSLine(segment) {
-    for (let j = 0; j < segment.lines.length; j++) {
-      const line = segment.lines[j];
-      const ratio = this.scale / line.scale;
-      if (ratio > 0.005 && ratio < 400) {
-        this.drawLine(
-          this.toScreenX(line.x0),
-          this.toScreenY(line.y0),
-          this.toScreenX(line.x1),
-          this.toScreenY(line.y1),
-          line.pressure * ratio,
-          line.color,
-        );
-      }
-    }
-  }
-
-  drawPath(segment) {
-    if (segment.lines.length === 0) return;
-    // this.ctx.lineWidth = line.pressure * ratio;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.toScreenX(segment.lines[0].x0), this.toScreenY(segment.lines[0].y0));
-
-    for (let j = 0; j < segment.lines.length; j++) {
-      const line = segment.lines[j];
-      const ratio = this.scale / line.scale;
-      if (ratio > 0.05 && ratio < 100) {
-        this.ctx.strokeStyle = this.color;
-        this.ctx.lineWidth = 1;
-        if (j > 1 && Layer.dist(segment.lines[j - 1].x0, segment.lines[j - 1].y0, line.x0, line.y0) < 20) {
-          this.ctx.lineTo(this.toScreenX(line.x1), this.toScreenY(line.y1));
-        } else {
-          this.ctx.moveTo(this.toScreenX(line.x0), this.toScreenY(line.y0));
-        }
-        this.ctx.stroke();
-      }
-    }
-  }
-
   draw() {
     // console.log('draw', this.index);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
 
-    Lines.find({ bookId: this.bookId, layerIndex: this.index }).forEach(line => {
-      const ratio = this.scale / line.scale;
-      if ((this.notDrawingActionInProgress() && !this.sel.selection) || ratio > 2) this.drawPath(line);
-      else this.drawSLine(line);
+    Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
+      if (drawing.type === 'lines') this.brush.drawing(drawing);
+      else console.log('unknown drawing type', drawing.type);
     });
   }
 

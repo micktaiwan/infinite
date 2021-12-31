@@ -4,12 +4,15 @@ export default class Layer {
     this.manager = manager;
     this.index = fields?.index;
     this.bookId = manager.bookId;
-    this.lines = [];
     this.userId = Meteor.userId();
+    this.color = '#000';
+    this.eraserSize = 40;
+    this.pressure = 2;
 
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.marginLeft = 50;
 
     this.canvas = document.createElement('canvas');
     this.canvas.tabIndex = this.index + 1;
@@ -21,14 +24,6 @@ export default class Layer {
 
     this.ctx.lineCap = 'round';
     // this.ctx.lineJoin = 'round';
-
-    this.marginLeft = 50;
-
-    // this.selCanvas = document.getElementById('selection');
-    // this.selCtx = this.selCanvas.getContext('2d');
-
-    // if the window changes size, redraw the canvas
-    window.addEventListener('resize', () => this.redraw());
   }
 
   destroy() {
@@ -171,6 +166,6 @@ export default class Layer {
   }
 }
 
-if (module.hot) {
-  module.hot.decline();
-}
+// if (module.hot) {
+//   module.hot.decline();
+// }

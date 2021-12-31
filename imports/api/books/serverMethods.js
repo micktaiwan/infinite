@@ -1,4 +1,4 @@
-import { Lines, Books, Layers } from './collections';
+import { Drawings, Books, Layers } from './collections';
 
 Meteor.methods({
 
@@ -6,7 +6,7 @@ Meteor.methods({
     const stats = {};
     Books.find({ userIds: this.userId }).forEach(book => {
       const bookId = book._id;
-      const lines = Lines.find({ bookId });
+      const lines = Drawings.find({ bookId });
       const layers = Layers.find({ bookId }).count();
       let max = 0;
       const segments = lines.map(line => {
@@ -23,17 +23,17 @@ Meteor.methods({
     return stats;
   },
 
-  optimizeLines() {
+  optimizeDrawings() {
     // for each lines, split into segments of 100 smaller lines
     let order = 0;
     let count = 0;
-    Lines.find({}, { sort: { order: 1 } }).forEach(line => {
+    Drawings.find({}, { sort: { order: 1 } }).forEach(line => {
       count++;
       // if (count % 1000 === 0) { console.log(count); }
       const { lines } = line;
       for (let i = 0; i < lines.length; i += 100) {
         order++;
-        Lines.insert({
+        Drawings.insert({
           bookId: line.bookId,
           layerIndex: line.layerIndex,
           order,
@@ -41,7 +41,7 @@ Meteor.methods({
           userId: line.userId,
         });
       }
-      Lines.remove(line._id);
+      Drawings.remove(line._id);
     });
     console.log(`optimized ${count} lines`);
   },

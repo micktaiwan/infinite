@@ -1,12 +1,12 @@
-import { Lines, Books, Layers } from './collections';
+import { Drawings, Books, Layers } from './collections';
 
 // splice lines in group of 100
 
-// function saveLines(lines, bookId, layerIndex) {
-//   let order = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
+// function saveDrawings(lines, bookId, layerIndex) {
+//   let order = Drawings.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
 //   for (let i = 0; i < lines.length; i += 100) {
 //     order++;
-//     Lines.insert({
+//     Drawings.insert({
 //       bookId,
 //       layerIndex,
 //       order,
@@ -42,41 +42,37 @@ Meteor.methods({
     Books.update(bookId, { $set: data });
   },
 
-  saveLines({ lines, layerIndex, bookId }) {
+  saveDrawings(obj) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
-    if (!lines.length) return;
-    let order = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
+    let order = Drawings.findOne({ bookId: obj.bookId, layerIndex: obj.layerIndex }, { sort: { order: -1 } })?.order || 0;
     order++;
-    Lines.insert({
+    Drawings.insert(_.extend(obj, {
       order,
-      bookId,
-      layerIndex,
-      lines,
       userId: this.userId,
-    });
+    }));
   },
 
   undo(bookId, layerIndex) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     if (!bookId) throw new Meteor.Error('no-book-id');
-    const lastLine = Lines.findOne({ bookId, layerIndex }, { sort: { order: -1 } });
+    const lastLine = Drawings.findOne({ bookId, layerIndex }, { sort: { order: -1 } });
     if (!lastLine) return;
-    Lines.remove(lastLine._id);
+    Drawings.remove(lastLine._id);
   },
 
-  updateLines(id, lines) {
+  updateDrawings(id, lines) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
-    if (lines.length === 0) Lines.remove(id);
-    else Lines.update(id, { $set: { lines } });
+    if (lines.length === 0) Drawings.remove(id);
+    else Drawings.update(id, { $set: { lines } });
   },
 
-  updateLinesBatch(changes) {
+  updateDrawingsBatch(changes) {
     if (!this.userId) throw new Meteor.Error('not-authorized');
     changes.forEach(({ id, lines }) => {
       if (lines.length === 0) {
-        Lines.remove(id);
+        Drawings.remove(id);
       } else {
-        Lines.update(id, { $set: { lines } });
+        Drawings.update(id, { $set: { lines } });
       }
     });
   },
@@ -100,7 +96,7 @@ Meteor.methods({
     if (!this.userId) throw new Meteor.Error('not-authorized');
     if (!_id) throw new Meteor.Error('no-layer-id');
     const layer = Layers.findOne(_id);
-    Lines.remove({ bookId: layer.bookId, layerIndex: layer.index });
+    Drawings.remove({ bookId: layer.bookId, layerIndex: layer.index });
     return Layers.remove(_id);
   },
 });

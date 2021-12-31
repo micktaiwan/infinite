@@ -7,9 +7,9 @@ import { Layers } from '../api/books/collections';
 
 // const imageTracer = require('./lib/imagetracer');
 
-if (module.hot) {
-  module.hot.decline();
-}
+// if (module.hot) {
+//   module.hot.decline();
+// }
 export default class LayerManager {
   constructor() {
     this.id = Random.id();
@@ -50,6 +50,8 @@ export default class LayerManager {
       },
     });
     this.initializing = false;
+
+    window.addEventListener('resize', () => this.redraw());
   }
 
   toggleLayer() {

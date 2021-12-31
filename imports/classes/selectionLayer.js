@@ -1,5 +1,5 @@
 import Layer from './layer';
-import { Lines } from '../api/books/collections';
+import { Drawings } from '../api/books/collections';
 
 export default class SelectionLayer extends Layer {
   constructor(manager) {
@@ -40,11 +40,6 @@ export default class SelectionLayer extends Layer {
 
     // with a pointer, move is triggered also with a tilt
     if (this.cursorX === this.prevCursorX && this.cursorY === this.prevCursorY) return;
-
-    const scaledX = this.toTrueX(this.cursorX);
-    const scaledY = this.toTrueY(this.cursorY);
-    // const prevScaledX = this.toTrueX(this.prevCursorX);
-    // const prevScaledY = this.toTrueY(this.prevCursorY);
 
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
@@ -120,11 +115,11 @@ export default class SelectionLayer extends Layer {
   }
 
   cancelSelection() {
-    this.copyLinesToOriginLayer();
+    this.copyDrawingsToOriginLayer();
     this.clearSelection();
   }
 
-  copyLinesToOriginLayer() {
+  copyDrawingsToOriginLayer() {
     this.lines.forEach(line => {
       line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
       line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
@@ -151,7 +146,7 @@ export default class SelectionLayer extends Layer {
     // console.log('redraw selection');
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (!this.selectionOriginLayer) this.drawTemplate();
-    this.drawSelectedLines();
+    this.drawSelectedDrawings();
     this.drawSelectionBoundaries();
   }
 
@@ -168,7 +163,7 @@ export default class SelectionLayer extends Layer {
     this.ctx.closePath();
   }
 
-  drawSelectedLines() {
+  drawSelectedDrawings() {
     if (!this.selectionOriginLayer) return;
     for (let j = 0; j < this.lines.length; j++) {
       const line = this.lines[j];
@@ -272,8 +267,8 @@ export default class SelectionLayer extends Layer {
   infos() {
     this.sel.fillText('Scale', 10, 10);
     this.sel.fillText(this.scale, 90, 10);
-    this.sel.fillText('Lines', 10, 25);
-    this.sel.fillText(Lines.find().count(), 90, 25);
+    this.sel.fillText('Drawings', 10, 25);
+    this.sel.fillText(Drawings.find().count(), 90, 25);
     // this.sel.fillText('Size', 10, 40);
     // this.sel.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
   }
