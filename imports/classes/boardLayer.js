@@ -76,11 +76,6 @@ export default class BoardLayer extends Layer {
   }
 
   onMouseMove(event) {
-    const events = event.getCoalescedEvents();
-    for (let i = 0; i < events.length; i++) this.onMovement(events[i]);
-  }
-
-  onMovement(event) {
     if (this.hidden) return;
 
     // get mouse position
@@ -160,7 +155,18 @@ export default class BoardLayer extends Layer {
     }
 
     // drawing
-    if (this.leftMouseDown) this.brush.draw(this);
+    if (this.leftMouseDown) {
+      const events = event.getCoalescedEvents();
+      for (let i = 0; i < events.length; i++) {
+        const e = events[i];
+        this.cursorX = e.clientX - this.marginLeft;
+        this.cursorY = e.clientY;
+        this.pressure = e.pressure * 3;
+        this.brush.draw(this);
+        this.prevCursorX = this.cursorX;
+        this.prevCursorY = this.cursorY;
+      }
+    }
 
     this.prevCursorX = this.cursorX;
     this.prevCursorY = this.cursorY;

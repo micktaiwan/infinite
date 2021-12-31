@@ -10,5 +10,5 @@ Meteor.startup(() => {
   Drawings.rawCollection().createIndex({ bookId: 1, layerIndex: 1, order: 1 });
   Drawings.rawCollection().createIndex({ order: 1 });
 
-  Drawings.update({}, { $set: { type: 'lines' } }, { multi: true });
+  // Drawings.update({}, { $set: { type: 'lines' } }, { multi: true });
 });
