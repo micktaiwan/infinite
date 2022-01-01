@@ -8,3 +8,7 @@ Template.registerHelper('pluralize', (v, name) => {
   if (v <= 1) return `${v} ${name}`;
   else return `${v} ${name}s`;
 });
+
+admin = function (js) {
+  Meteor.call('admin', js, (err, res) => { console.log(res); });
+};

@@ -44,5 +44,6 @@ module.exports = {
   globals: {
     FlowRouter: 'writable',
     BlazeLayout: 'writable',
+    admin: 'writable',
   },
 };

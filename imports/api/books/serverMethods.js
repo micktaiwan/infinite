@@ -38,4 +38,16 @@ Meteor.methods({
     });
     console.log(`optimized ${count} lines`);
   },
+
+  admin(js) {
+    try {
+      const user = Meteor.users.findOne(this.userId);
+      if (!user || !user.admin) throw new Meteor.Error('not-authorized');
+      if (!js) return '?';
+      return eval(js);
+    } catch (err) {
+      return `Error: ${err.message}`;
+    }
+  },
+
 });
