@@ -30,7 +30,7 @@ export default class LinesBrush extends Brush {
 
   straitLine(layer, line) {
     this.lines.push(line);
-    layer.drawLine(layer.prevCursorX, layer.prevCursorY, layer.cursorX, layer.cursorY, layer.pressure, layer.color);
+    layer.drawLine(layer.toScreenX(line.x0), layer.toScreenY(line.y0), layer.toScreenX(line.x1), layer.toScreenY(line.y1), line.pressure, line.color);
   }
 
   // draw a previous drawing

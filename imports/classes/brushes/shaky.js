@@ -12,12 +12,14 @@ export default class ShakyBrush extends LinesBrush {
 
   // create a new drawing
   draw(layer) {
-    const scaledX = layer.toTrueX(layer.cursorX) + Math.random() * this.options.maxSize / layer.scale;
-    const scaledY = layer.toTrueY(layer.cursorY) + Math.random() * this.options.maxSize / layer.scale;
-    const prevScaledX = layer.toTrueX(layer.prevCursorX);
-    const prevScaledY = layer.toTrueY(layer.prevCursorY);
+    const randX = Math.random() * this.options.maxSize / layer.scale;
+    const randY = Math.random() * this.options.maxSize / layer.scale;
+    const scaledX = layer.toTrueX(layer.cursorX) + randX;
+    const scaledY = layer.toTrueY(layer.cursorY) + randY;
     layer.cursorX = layer.toScreenX(scaledX);
     layer.cursorY = layer.toScreenY(scaledY);
+    const prevScaledX = layer.toTrueX(layer.prevCursorX);
+    const prevScaledY = layer.toTrueY(layer.prevCursorY);
 
     this.straitLine(layer, {
       scale: layer.scale,
