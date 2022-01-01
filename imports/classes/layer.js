@@ -9,7 +9,7 @@ export default class Layer {
     this.userId = Meteor.userId();
     this.color = '#000';
     this.eraserSize = 40;
-    this.pressure = this.manager.brush.maxSize;
+    this.pressure = this.manager.brush.options.maxSize;
 
     this.scale = 1;
     this.offsetX = 0;
@@ -95,7 +95,7 @@ export default class Layer {
 
   reset(redraw = true) {
     if (this.destroyed) return;
-    console.log('reset', this.canvas.id);
+    // console.log('reset', this.canvas.id);
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;

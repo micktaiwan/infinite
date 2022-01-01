@@ -1,6 +1,5 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
-import { Random } from 'meteor/random';
 import LinesBrush from './brushes/lines';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
@@ -12,11 +11,7 @@ import { Layers } from '../api/books/collections';
 //   module.hot.decline();
 // }
 export default class LayerManager {
-  constructor() {
-    this.id = Random.id();
-  }
-
-  init(bookId) {
+  constructor(bookId) {
     this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
@@ -30,6 +25,7 @@ export default class LayerManager {
       lines: new LinesBrush(),
     };
     this.brush = this.brushes.lines;
+    this.loadPrefs();
 
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
@@ -61,12 +57,32 @@ export default class LayerManager {
   setBrush(brush, options) {
     this.brush = brush;
     this.brush.setOptions(options);
+    this.savePrefs();
+  }
+
+  savePrefs() {
+    const prefs = {
+      brush: this.brush.type,
+      brushOptions: this.brush.options,
+    };
+    Meteor.call('savePrefs', prefs);
+  }
+
+  loadPrefs() {
+    Tracker.autorun(() => { // why is this needed ???
+      const user = Meteor.user();
+      if (!user) return;
+      const { prefs } = user.profile;
+      if (prefs) {
+        this.setBrush(this.brushForType(prefs.brush), prefs.brushOptions);
+      }
+    });
   }
 
   brushForType(type) {
     switch (type) {
       case 'lines':
-        return this.manager.brushes.lines;
+        return this.brushes.lines;
       default:
         return undefined;
     }
@@ -86,6 +102,7 @@ export default class LayerManager {
   }
 
   destroy() {
+    this.destroyed = true;
     console.log('LayerManager: destroy');
     this.observeHandle.stop();
     this.layers.forEach(layer => {
@@ -144,6 +161,7 @@ export default class LayerManager {
   }
 
   redraw() {
+    if (this.destroyed) return;
     this.selectionLayer.redraw();
     this.layers.forEach(layer => {
       layer.redraw();

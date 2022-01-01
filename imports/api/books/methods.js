@@ -99,4 +99,10 @@ Meteor.methods({
     Drawings.remove({ bookId: layer.bookId, layerIndex: layer.index });
     return Layers.remove(_id);
   },
+
+  savePrefs(prefs) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    Meteor.users.update(this.userId, { $set: { 'profile.prefs': prefs } });
+  },
+
 });

@@ -4,20 +4,19 @@ import { Layers } from '../imports/api/books/collections';
 
 import './book.html';
 
-Template.book.onCreated(function () {
-  Meteor.call('booksAddUser', FlowRouter.getParam('bookId'));
-  this.manager = new LayerManager();
-});
-
 Template.book.onRendered(function () {
-  const bookId = FlowRouter.getParam('bookId');
-  this.manager.init(bookId);
-  const self = this;
-  this.subscribe('layers', bookId, () => {
-    Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
-    Meteor.defer(() => {
-      self.subscribe('lines', bookId, () => {
-        self.manager.redraw();
+  this.autorun(() => {
+    if (!Meteor.userId()) return;
+    const bookId = FlowRouter.getParam('bookId');
+    Meteor.call('booksAddUser', bookId);
+    this.manager = new LayerManager(bookId);
+    const self = this;
+    this.subscribe('layers', bookId, () => {
+      Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
+      Meteor.defer(() => {
+        self.subscribe('lines', bookId, () => {
+          self.manager.redraw();
+        });
       });
     });
   });
