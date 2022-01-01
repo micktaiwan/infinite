@@ -58,6 +58,11 @@ export default class LayerManager {
     window.addEventListener('resize', () => this.redraw());
   }
 
+  setBrush(brush, options) {
+    this.brush = brush;
+    this.brush.setOptions(options);
+  }
+
   brushForType(type) {
     switch (type) {
       case 'lines':

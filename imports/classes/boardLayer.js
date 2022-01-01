@@ -86,7 +86,7 @@ export default class BoardLayer extends Layer {
 
     const scaledX = this.toTrueX(this.cursorX);
     const scaledY = this.toTrueY(this.cursorY);
-    this.pressure = event.pressure * 3;
+    this.pressure = event.pressure * this.manager.brush.maxSize;
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
     if (this.zooming) {
@@ -160,7 +160,7 @@ export default class BoardLayer extends Layer {
         const e = events[i];
         this.cursorX = e.clientX - this.marginLeft;
         this.cursorY = e.clientY;
-        this.pressure = e.pressure * 3;
+        this.pressure = e.pressure * this.manager.brush.maxSize;
         this.manager.brush.draw(this);
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
@@ -355,9 +355,7 @@ export default class BoardLayer extends Layer {
   }
 
   saveDrawings() {
-    this.manager.brushes.forEach(brush => {
-      brush.saveDrawings(this);
-    });
+    this.manager.brush.saveDrawings(this);
   }
 
   reset(redraw = true) {
@@ -371,7 +369,7 @@ export default class BoardLayer extends Layer {
   }
 
   drawEraser(x, y) {
-    const size = this.pressure / 3 * this.eraserSize;
+    const size = this.pressure / this.manager.brush.maxSize * this.eraserSize;
     if (!this.leftMouseDown) {
       this.sel.redraw();
       this.selCtx.strokeStyle = '#555';

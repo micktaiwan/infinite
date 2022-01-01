@@ -9,7 +9,7 @@ export default class Layer {
     this.userId = Meteor.userId();
     this.color = '#000';
     this.eraserSize = 40;
-    this.pressure = 2;
+    this.pressure = this.manager.brush.maxSize;
 
     this.scale = 1;
     this.offsetX = 0;

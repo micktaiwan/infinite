@@ -64,6 +64,15 @@ Template.book.events({
     if (e.shiftKey && e.keyCode === 84) tpl.manager.toggleLayer();
   },
   'click .js-brush-1'(e, tpl) {
-    tpl.manager.setBrush(1);
+    tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 2 });
+  },
+  'click .js-brush-2'(e, tpl) {
+    tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 3 });
+  },
+  'click .js-brush-3'(e, tpl) {
+    tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 15 });
+  },
+  'click .js-brush-4'(e, tpl) {
+    tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 100 });
   },
 });

@@ -3,8 +3,8 @@ import { Drawings } from '../../api/books/collections';
 import Helpers from '../helpers';
 
 export default class LinesBrush extends Brush {
-  constructor(layer) {
-    super(layer);
+  constructor() {
+    super();
     this.type = 'lines';
     this.name = 'Simple Brush';
     this.lines = [];
