@@ -81,6 +81,7 @@ export default class SelectionLayer extends Layer {
   }
 
   onMouseDown(event) {
+    if (!this.selection) return;
     if (event.button === 0) {
       if (this.insideSelection(this.cursorX, this.cursorY)) {
         this.startPan(event);

@@ -116,7 +116,7 @@ export default class BoardLayer extends Layer {
 
       const self = this;
       Meteor.defer(() => {
-        const size = self.pressure * self.eraserSize / 3;
+        const size = event.pressure * self.eraserSize;
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
           if (drawing.type === 'lines') {
