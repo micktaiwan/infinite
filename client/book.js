@@ -23,6 +23,7 @@ Template.book.onRendered(function () {
 });
 
 Template.book.onDestroyed(function () {
+  if (!this.manager) return;
   this.manager.destroy();
   this.manager = null;
 });
