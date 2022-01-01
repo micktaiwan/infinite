@@ -20,9 +20,15 @@
     <li tabindex="4">
       <i class="fas fa-hammer button" title="Sensitivity"></i>
       <ul>
-        <li class="js-sensitivity-0"><i class="fas fa-hammer"></i> Sensitivity 0</li>
-        <li class="js-sensitivity-1"><i class="fas fa-hammer"></i> Sensitivity 1</li>
-        <li class="js-sensitivity-2"><i class="fas fa-hammer"></i> Sensitivity 2</li>
+        <li class="js-sensitivity-0">
+          <i class="fas fa-hammer"></i> Sensitivity 0
+        </li>
+        <li class="js-sensitivity-1">
+          <i class="fas fa-hammer"></i> Sensitivity 1
+        </li>
+        <li class="js-sensitivity-2">
+          <i class="fas fa-hammer"></i> Sensitivity 2
+        </li>
       </ul>
     </li>
   </ul>
@@ -55,6 +61,9 @@
         </li>
       </ul>
     </li>
+    {{#unless currentUser}}
+    <li class="error">You must be <a href="/">logged</a> to see this book</li>
+    {{/unless}}
   </ul>
 
   <div id="layers"></div>
