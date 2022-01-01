@@ -8,7 +8,6 @@ export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
     this.hidden = false;
-    this.brush = manager.brushes.lines;
     if (fields.positions) {
       const p = fields.positions[this.userId];
       if (p) {
@@ -162,7 +161,7 @@ export default class BoardLayer extends Layer {
         this.cursorX = e.clientX - this.marginLeft;
         this.cursorY = e.clientY;
         this.pressure = e.pressure * 3;
-        this.brush.draw(this);
+        this.manager.brush.draw(this);
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
       }
@@ -356,7 +355,9 @@ export default class BoardLayer extends Layer {
   }
 
   saveDrawings() {
-    this.brush.saveDrawings(this);
+    this.manager.brushes.forEach(brush => {
+      brush.saveDrawings(this);
+    });
   }
 
   reset(redraw = true) {

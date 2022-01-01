@@ -63,4 +63,7 @@ Template.book.events({
   'keydown'(e, tpl) {
     if (e.shiftKey && e.keyCode === 84) tpl.manager.toggleLayer();
   },
+  'click .js-brush-1'(e, tpl) {
+    tpl.manager.setBrush(1);
+  },
 });

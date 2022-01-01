@@ -29,6 +29,8 @@ export default class LayerManager {
     this.brushes = {
       lines: new LinesBrush(),
     };
+    this.brush = this.brushes.lines;
+
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
 

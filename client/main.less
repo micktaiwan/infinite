@@ -31,7 +31,7 @@ a {
 
 #vmenu {
   user-select: none;
-  z-index: 100;
+  z-index: 1000;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -41,8 +41,44 @@ a {
   position: absolute;
 
   li {
+    // border: 1px solid #000;
+    display: block;
+    position: relative;
     margin: 0;
     padding: 5px;
+    i.button {
+      cursor: pointer;
+      margin: 0;
+      padding: 8px 14px;
+      border-radius: 5px;
+      width: 12px;
+      background: #fff;
+    }
+    &:focus {
+      ul {
+        display: block;
+        li {
+          display: block;
+        }
+      }
+    }
+    ul {
+      position: absolute;
+      top: 5px;
+      list-style: none;
+      margin-left: 51px;
+      padding: 0;
+      display: none;
+      // border:#000 solid 1px;
+      li {
+        min-width: 100px;
+        margin: 0;
+        padding: 0;
+        &:hover {
+          background: #000;
+        }
+      }
+    }
   }
 
   button {
