@@ -75,13 +75,19 @@ Template.book.events({
   'click .js-brush-4'(e, tpl) {
     tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 100 });
   },
+  'click .js-pen-1'(e, tpl) {
+    tpl.manager.setBrush(tpl.manager.brushes.shaky, { maxSize: 3 });
+  },
+  'click .js-pen-2'(e, tpl) {
+    tpl.manager.setBrush(tpl.manager.brushes.shaky, { maxSize: 10 });
+  },
   'click .js-sensitivity-0'(e, tpl) {
-    tpl.manager.setBrush(tpl.manager.brushes.lines, { minSensitivity: 0 });
+    tpl.manager.setBrush(tpl.manager.brush, { minSensitivity: 0 });
   },
   'click .js-sensitivity-1'(e, tpl) {
-    tpl.manager.setBrush(tpl.manager.brushes.lines, { minSensitivity: 0.15 });
+    tpl.manager.setBrush(tpl.manager.brush, { minSensitivity: 0.15 });
   },
   'click .js-sensitivity-2'(e, tpl) {
-    tpl.manager.setBrush(tpl.manager.brushes.lines, { minSensitivity: 0.3 });
+    tpl.manager.setBrush(tpl.manager.brush, { minSensitivity: 0.3 });
   },
 });

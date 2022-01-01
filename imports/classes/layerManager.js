@@ -1,6 +1,7 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
 import LinesBrush from './brushes/lines';
+import ShakyBrush from './brushes/shaky';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../api/books/collections';
@@ -23,6 +24,7 @@ export default class LayerManager {
     this.layers = [];
     this.brushes = {
       lines: new LinesBrush(),
+      shaky: new ShakyBrush(),
     };
     this.brush = this.brushes.lines;
     this.loadPrefs();
@@ -83,7 +85,10 @@ export default class LayerManager {
     switch (type) {
       case 'lines':
         return this.brushes.lines;
+      case 'shaky':
+        return this.brushes.shaky;
       default:
+        console.error(`Unknown brush type: ${type}`);
         return undefined;
     }
   }

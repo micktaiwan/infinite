@@ -119,9 +119,8 @@ export default class BoardLayer extends Layer {
         const size = event.pressure * self.eraserSize;
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
-          if (drawing.type === 'lines') {
-            this.manager.brushes.lines.eraseCircle(drawing, scaledX, scaledY, size / this.scale, changes);
-          }
+          if (drawing.type === 'lines') this.manager.brushes.lines.eraseCircle(drawing, scaledX, scaledY, size / this.scale, changes);
+          else if (drawing.type === 'shaky') this.manager.brushes.shaky.eraseCircle(drawing, scaledX, scaledY, size / this.scale, changes);
         });
         if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
       });
@@ -343,6 +342,7 @@ export default class BoardLayer extends Layer {
     const objs = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
     objs.forEach(drawing => {
       if (drawing.type === 'lines') this.manager.brushes.lines.eraseRectangle(drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
+      else if (drawing.type === 'shaky') this.manager.brushes.shaky.eraseRectangle(drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
     });
     if (foundDrawings.length) Meteor.call('updateDrawingsBatch', foundDrawings);
     this.sel.drawings = foundDrawings.map(f => f.drawings);
@@ -452,6 +452,7 @@ export default class BoardLayer extends Layer {
 
     Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
       if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
+      else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
       else console.log('unknown drawing type', drawing.type);
     });
   }

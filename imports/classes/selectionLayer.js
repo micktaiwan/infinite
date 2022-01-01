@@ -115,7 +115,7 @@ export default class SelectionLayer extends Layer {
   copyDrawingsToOriginLayer() {
     this.drawings.forEach(drawing => {
       this.selectionOriginLayer.brush = this.manager.brushes[drawing.type];
-      if (drawing.type === 'lines') {
+      if (drawing.type === 'lines' || drawing.type === 'shaky') {
         // TODO: should be in LinesBrush
         drawing.lines.forEach(line => {
           line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
@@ -163,9 +163,9 @@ export default class SelectionLayer extends Layer {
     if (!this.selectionOriginLayer) return;
     this.drawings.forEach(drawing => {
       drawing.color = '#f90';
-      if (drawing.type === 'lines') {
-        this.manager.brushes.lines.drawing(drawing, this);
-      } else console.log('unknown drawing type', drawing.type);
+      if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
+      else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
+      else console.log('unknown drawing type', drawing.type);
     });
   }
 
@@ -239,7 +239,7 @@ export default class SelectionLayer extends Layer {
     let maxY = this.selection.y + this.selection.height;
     // TODO: should be in LinesBrush
     this.drawings.forEach(drawing => {
-      if (drawing.type === 'lines') {
+      if (drawing.type === 'lines' || drawing.type === 'shaky') {
         drawing.lines.forEach(line => {
           if (this.toScreenX(line.x0) < minX) minX = this.toScreenX(line.x0);
           if (this.toScreenX(line.x1) < minX) minX = this.toScreenX(line.x1);
