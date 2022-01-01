@@ -161,7 +161,7 @@ export default class BoardLayer extends Layer {
         this.cursorX = e.clientX - this.marginLeft;
         this.cursorY = e.clientY;
         this.pressure = e.pressure * this.manager.brush.maxSize;
-        this.manager.brush.draw(this);
+        if (!this.manager.brush.sensitivityOverflow(e.pressure)) this.manager.brush.draw(this);
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
       }
