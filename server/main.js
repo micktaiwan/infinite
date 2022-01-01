@@ -11,4 +11,6 @@ Meteor.startup(() => {
   Drawings.rawCollection().createIndex({ order: 1 });
 
   // Drawings.update({}, { $set: { type: 'lines' } }, { multi: true });
+
+  console.log('server started.', Meteor.users.find().count(), 'registered users', Meteor.users.find().fetch().map(u => u.profile.name));
 });
