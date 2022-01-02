@@ -165,7 +165,6 @@ export default class LinesBrush extends Brush {
       if (layer.toScreenY(line.y0) > maxY) maxY = layer.toScreenY(line.y0);
       if (layer.toScreenY(line.y1) > maxY) maxY = layer.toScreenY(line.y1);
     });
-    console.log(minX, minY, maxX, maxY);
     return { minX, minY, maxX, maxY };
   }
 }
