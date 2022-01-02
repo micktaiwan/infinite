@@ -165,7 +165,7 @@ export default class SelectionLayer extends Layer {
       drawing.color = '#f90';
       if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
       else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
-      else console.log('unknown drawing type', drawing.type);
+      else console.error('unknown drawing type', drawing.type);
     });
   }
 

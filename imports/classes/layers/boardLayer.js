@@ -446,13 +446,11 @@ export default class BoardLayer extends Layer {
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
-    console.log('drawing layer', this.index);
 
     Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
-      console.log(drawing);
       if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
       else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
-      else console.log('unknown drawing type', drawing.type);
+      else console.error('unknown drawing type', drawing.type);
     });
   }
 
