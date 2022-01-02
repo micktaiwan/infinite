@@ -91,20 +91,9 @@ export default class PaperBrush extends Brush {
       const dist = Helpers.dist(s.point.x, s.point.y, prev.point.x, prev.point.y);
       if (dist > averageDistance) averageDistance = dist;
     }
-    console.log('average distance', averageDistance);
     if (averageDistance < 1 || averageDistance > 25) {
       const factor = 10 / averageDistance;
       this.path.scale(factor);
-
-      let averageDistance2 = 0;
-      for (let i = 1; i < this.path.segments.length - 1; i++) {
-        const s = this.path.segments[i];
-        const prev = this.path.segments[i - 1];
-        const dist = Helpers.dist(s.point.x, s.point.y, prev.point.x, prev.point.y);
-        if (dist > averageDistance2) averageDistance2 = dist;
-      }
-      console.log('average distance2', averageDistance2);
-
       return factor;
     }
     return 1;
