@@ -131,4 +131,41 @@ export default class LinesBrush extends Brush {
     }
     return changed;
   }
+
+  scaleAndSaveDrawing(drawing, from, dest) {
+    drawing.lines.forEach(line => {
+      line.x0 = dest.toTrueX(from.scale * (line.x0 + from.offsetX));
+      line.y0 = dest.toTrueY(from.scale * (line.y0 + from.offsetY));
+      line.x1 = dest.toTrueX(from.scale * (line.x1 + from.offsetX));
+      line.y1 = dest.toTrueY(from.scale * (line.y1 + from.offsetY));
+      line.scale /= from.scale / dest.scale;
+    });
+    // split lines by group of 100
+    for (let i = 0; i < drawing.lines.length; i += 100) {
+      this.lines = drawing.lines.slice(i, i + 100);
+      this.saveDrawings(dest);
+    }
+  }
+
+  changePressure(drawing, scaleAmount) {
+    drawing.lines.forEach(line => {
+      line.pressure *= scaleAmount;
+      if (line.pressure < 0.1) line.pressure = 0.1;
+    });
+  }
+
+  boundingBox(drawing, layer, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity) {
+    drawing.lines.forEach(line => {
+      if (layer.toScreenX(line.x0) < minX) minX = layer.toScreenX(line.x0);
+      if (layer.toScreenX(line.x1) < minX) minX = layer.toScreenX(line.x1);
+      if (layer.toScreenY(line.y0) < minY) minY = layer.toScreenY(line.y0);
+      if (layer.toScreenY(line.y1) < minY) minY = layer.toScreenY(line.y1);
+      if (layer.toScreenX(line.x0) > maxX) maxX = layer.toScreenX(line.x0);
+      if (layer.toScreenX(line.x1) > maxX) maxX = layer.toScreenX(line.x1);
+      if (layer.toScreenY(line.y0) > maxY) maxY = layer.toScreenY(line.y0);
+      if (layer.toScreenY(line.y1) > maxY) maxY = layer.toScreenY(line.y1);
+    });
+    console.log(minX, minY, maxX, maxY);
+    return { minX, minY, maxX, maxY };
+  }
 }

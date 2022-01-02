@@ -63,6 +63,13 @@ export default class LayerManager {
     window.addEventListener('resize', () => this.redraw());
   }
 
+  delegate(method, drawing, ...args) {
+    if (drawing.type === 'lines') return this.brushes.lines[method](drawing, ...args);
+    else if (drawing.type === 'shaky') return this.brushes.shaky[method](drawing, ...args);
+    else console.error(`LayerManager.delegate: Unknown drawing type ${drawing.type}`);
+    return undefined;
+  }
+
   setBrush(brush, options) {
     this.brush = brush;
     this.brush.setOptions(options);

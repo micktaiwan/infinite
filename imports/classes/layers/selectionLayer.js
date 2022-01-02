@@ -133,22 +133,7 @@ export default class SelectionLayer extends Layer {
 
   copyDrawingsToOriginLayer() {
     this.drawings.forEach(drawing => {
-      this.selectionOriginLayer.brush = this.manager.brushes[drawing.type];
-      if (drawing.type === 'lines' || drawing.type === 'shaky') {
-        // TODO: should be in LinesBrush
-        drawing.lines.forEach(line => {
-          line.x0 = this.selectionOriginLayer.toTrueX(this.scale * (line.x0 + this.offsetX));
-          line.y0 = this.selectionOriginLayer.toTrueY(this.scale * (line.y0 + this.offsetY));
-          line.x1 = this.selectionOriginLayer.toTrueX(this.scale * (line.x1 + this.offsetX));
-          line.y1 = this.selectionOriginLayer.toTrueY(this.scale * (line.y1 + this.offsetY));
-          line.scale /= this.scale / this.selectionOriginLayer.scale;
-        });
-        // split lines by group of 100
-        for (let i = 0; i < drawing.lines.length; i += 100) {
-          this.manager.brushes.lines.lines = drawing.lines.slice(i, i + 100);
-          this.manager.brushes.lines.saveDrawings(this.selectionOriginLayer);
-        }
-      }
+      this.manager.delegate('scaleAndSaveDrawing', drawing, this, this.selectionOriginLayer);
     });
   }
 
@@ -182,9 +167,7 @@ export default class SelectionLayer extends Layer {
     if (!this.selectionOriginLayer) return;
     this.drawings.forEach(drawing => {
       drawing.color = '#f90';
-      if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
-      else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
-      else console.error('unknown drawing type', drawing.type);
+      this.manager.delegate('drawing', drawing, this);
     });
   }
 
@@ -254,15 +237,10 @@ export default class SelectionLayer extends Layer {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
     let deltaY = Math.abs(this.startY - this.cursorY);
     if (deltaY > 20) deltaY = 20;
-    const scaleAmount = reverse * deltaY / 1000;
+    const scaleAmount = (1 + reverse * deltaY / 1000);
 
     this.drawings.forEach(drawing => {
-      if (drawing.type === 'lines' || drawing.type === 'shaky') {
-        drawing.lines.forEach(line => {
-          line.pressure *= (1 + scaleAmount);
-          if (line.pressure < 0.1) line.pressure = 0.1;
-        });
-      }
+      this.manager.delegate('changePressure', drawing, scaleAmount);
     });
 
     this.redraw();
@@ -273,20 +251,8 @@ export default class SelectionLayer extends Layer {
     let minY = this.selection.y;
     let maxX = this.selection.x + this.selection.width;
     let maxY = this.selection.y + this.selection.height;
-    // TODO: should be in LinesBrush
     this.drawings.forEach(drawing => {
-      if (drawing.type === 'lines' || drawing.type === 'shaky') {
-        drawing.lines.forEach(line => {
-          if (this.toScreenX(line.x0) < minX) minX = this.toScreenX(line.x0);
-          if (this.toScreenX(line.x1) < minX) minX = this.toScreenX(line.x1);
-          if (this.toScreenY(line.y0) < minY) minY = this.toScreenY(line.y0);
-          if (this.toScreenY(line.y1) < minY) minY = this.toScreenY(line.y1);
-          if (this.toScreenX(line.x0) > maxX) maxX = this.toScreenX(line.x0);
-          if (this.toScreenX(line.x1) > maxX) maxX = this.toScreenX(line.x1);
-          if (this.toScreenY(line.y0) > maxY) maxY = this.toScreenY(line.y0);
-          if (this.toScreenY(line.y1) > maxY) maxY = this.toScreenY(line.y1);
-        });
-      }
+      ({ minX, minY, maxX, maxY } = this.manager.delegate('boundingBox', drawing, this, minX, minY, maxX, maxY));
     });
     this.selection.x = minX;
     this.selection.y = minY;
