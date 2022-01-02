@@ -228,7 +228,7 @@ export default class BoardLayer extends Layer {
         color: this.color,
       },
     );
-    this.saveDrawings();
+    this.manager.brushes.lines.saveDrawings(this);
     this.redraw();
     this.sel.redraw();
   }
@@ -279,7 +279,7 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.startY),
       color: this.color,
     });
-    this.saveDrawings();
+    this.manager.brushes.lines.saveDrawings(this);
     this.sel.redraw();
     this.redraw();
   }
