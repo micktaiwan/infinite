@@ -94,7 +94,7 @@ export default class Layer {
 
   reset(redraw = true) {
     if (this.destroyed) return;
-    // console.log('reset', this.canvas.id);
+    console.log('reset', this.canvas.id);
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;

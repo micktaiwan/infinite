@@ -29,13 +29,7 @@ export default class PaperBrush extends Brush {
     // console.log('draw', layer.trueX, layer.trueY);
     this.path.add(new paper.Point(layer.trueX, layer.trueY));
     // this.drawing(this.toDrawing(this.path, layer), layer);
-    layer.ctx.beginPath();
-    layer.ctx.moveTo(layer.toScreenX(this.path.segments[this.path.segments.length - 2].point.x), layer.toScreenY(this.path.segments[this.path.segments.length - 2].point.y));
-    layer.ctx.lineTo(layer.toScreenX(this.path.segments[this.path.segments.length - 1].point.x), layer.toScreenY(this.path.segments[this.path.segments.length - 1].point.y));
-    layer.ctx.strokeStyle = 'black';
-    layer.ctx.lineWidth = this.options.maxSize;
-    layer.ctx.stroke();
-    layer.ctx.closePath();
+    layer.drawLine(layer.prevCursorX, layer.prevCursorY, layer.cursorX, layer.cursorY, this.options.maxSize, this.color);
   }
 
   // draw a previous drawing
@@ -104,6 +98,7 @@ export default class PaperBrush extends Brush {
   }
 
   simplify(x = 2.5) {
+    if (!this.path || !this.path.simplify) return;
     // TODO: normalize before simplifying: find the average distance between points, and if too low, zoom in
     const factor = this.normalize();
     const segmentCount = this.path.segments.length;

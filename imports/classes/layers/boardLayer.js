@@ -450,12 +450,14 @@ export default class BoardLayer extends Layer {
     if (this.hidden) return;
 
     const cursor = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
-    if (cursor.count() === 0) super.reset(false);
+    const count = cursor.count();
+    if (this.prevCount && !count) super.reset(false);
     else {
       cursor.forEach(drawing => {
         this.manager.delegate('drawing', drawing, this);
       });
     }
+    this.prevCount = count;
   }
 
   redraw() {
