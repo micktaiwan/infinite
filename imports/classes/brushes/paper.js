@@ -21,6 +21,8 @@ export default class PaperBrush extends Brush {
 
   mouseUp(layer) {
     // console.log('mouse up');
+    if (!this.path) return;
+    this.simplify();
   }
 
   // create a new drawing
@@ -54,7 +56,7 @@ export default class PaperBrush extends Brush {
       );
     }
     c.lineWidth = drawing.pressure * (layer.scale / drawing.scale);
-    c.strokeStyle = 'black';
+    c.strokeStyle = drawing.color;
     c.stroke();
     c.closePath();
   }
@@ -81,7 +83,7 @@ export default class PaperBrush extends Brush {
     }
   }
 
-  simplify(x) {
+  simplify(x = 2.5) {
     const segmentCount = this.path.segments.length;
     this.path.simplify(x);
     // this.path.smooth();
@@ -98,6 +100,7 @@ export default class PaperBrush extends Brush {
       pressure: this.options.maxSize,
       scale: layer.scale,
       lines: this.pathToSegments(path),
+      color: this.color,
       layerIndex: layer.index,
       bookId: layer.bookId,
     };
@@ -110,17 +113,16 @@ export default class PaperBrush extends Brush {
   saveDrawings(layer) {
     if (!super.saveDrawings()) return;
     if (!this.path) return;
-    this.simplify(2.5);
     Meteor.call('saveDrawings', this.toDrawing(this.path, layer));
     this.path = undefined;
   }
 
   eraseCircle(drawing, x, y, size, changes) {
     let changed = false;
-    const { segments } = drawing;
+    const { lines } = drawing;
     const foundLines = [];
-    for (let i = 0; i < segments.length; i++) {
-      const line = segments[i];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       if (Helpers.dist(line.x0, line.y0, x, y) < size ||
           Helpers.dist(line.x1, line.y1, x, y) < size) {
         foundLines.push(line);
@@ -137,14 +139,15 @@ export default class PaperBrush extends Brush {
     return changed;
   }
 
+  // too simple, must take into account paths to be slit in half
   eraseRectangle(drawing, x, y, width, height, changes) {
     let changed = false;
     const { lines } = drawing;
     const foundLines = [];
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (line.x0 >= x && line.x0 <= x + width &&
-          line.y0 >= y && line.y0 <= y + height) {
+      if (line.point.x >= x && line.point.x <= x + width &&
+         line.point.y >= y && line.point.y <= y + height) {
         lines.splice(i, 1);
         foundLines.push(line);
         i--;
@@ -161,17 +164,19 @@ export default class PaperBrush extends Brush {
 
   scaleAndSaveDrawing(drawing, from, dest) {
     drawing.lines.forEach(line => {
-      line.x0 = dest.toTrueX(from.scale * (line.x0 + from.offsetX));
-      line.y0 = dest.toTrueY(from.scale * (line.y0 + from.offsetY));
-      line.x1 = dest.toTrueX(from.scale * (line.x1 + from.offsetX));
-      line.y1 = dest.toTrueY(from.scale * (line.y1 + from.offsetY));
-      line.scale /= from.scale / dest.scale;
+      // console.log(line);
+      line.point.x = dest.toTrueX(from.scale * (line.point.x + from.offsetX));
+      line.point.y = dest.toTrueY(from.scale * (line.point.y + from.offsetY));
+
+      // line.handleIn = { x: dest.toTrueX(from.scale * (line.in.x)), y: dest.toTrueY(from.scale * (line.in.y)) };
+      // line.handleOut = { x: dest.toTrueX(from.scale * (line.out.x)), y: dest.toTrueY(from.scale * (line.out.y)) };
+
+      line.handleIn = { x: line.in.x, y: line.in.y };
+      line.handleOut = { x: line.out.x, y: line.out.y };
+      // console.log(line);
     });
-    // split lines by group of 100
-    for (let i = 0; i < drawing.lines.length; i += 100) {
-      this.lines = drawing.lines.slice(i, i + 100);
-      this.saveDrawings(dest);
-    }
+    this.path = { segments: drawing.lines };
+    this.saveDrawings(dest);
   }
 
   changePressure(drawing, scaleAmount) {
