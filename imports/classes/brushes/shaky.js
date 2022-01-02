@@ -14,8 +14,8 @@ export default class ShakyBrush extends LinesBrush {
   draw(layer) {
     const randX = Math.random() * this.options.maxSize / layer.scale;
     const randY = Math.random() * this.options.maxSize / layer.scale;
-    const scaledX = layer.toTrueX(layer.cursorX) + randX;
-    const scaledY = layer.toTrueY(layer.cursorY) + randY;
+    const scaledX = layer.trueX + randX;
+    const scaledY = layer.trueY + randY;
     layer.cursorX = layer.toScreenX(scaledX);
     layer.cursorY = layer.toScreenY(scaledY);
     const prevScaledX = layer.toTrueX(layer.prevCursorX);

@@ -112,6 +112,8 @@ export default class Layer {
     this.prevCursorY = this.cursorY;
     this.cursorX = event.clientX - this.marginLeft;
     this.cursorY = event.clientY;
+    this.trueX = this.toTrueX(this.cursorX);
+    this.trueY = this.toTrueY(this.cursorY);
   }
 
   boundingBox() {

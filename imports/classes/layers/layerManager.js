@@ -2,6 +2,7 @@
 // const Layer = require('./layer');
 import LinesBrush from '../brushes/lines';
 import ShakyBrush from '../brushes/shaky';
+import PaperBrush from '../brushes/paper';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../../api/books/collections';
@@ -16,6 +17,8 @@ export default class LayerManager {
     this.bookId = bookId;
     this.cursorX = 0;
     this.cursorY = 0;
+    this.trueX = 0;
+    this.trueY = 0;
     this.prevCursorX = 0;
     this.prevCursorY = 0;
     this.leftMouseDown = false;
@@ -25,6 +28,7 @@ export default class LayerManager {
     this.brushes = {
       lines: new LinesBrush(),
       shaky: new ShakyBrush(),
+      paper: new PaperBrush(),
     };
     this.brush = this.brushes.lines;
 
@@ -66,6 +70,7 @@ export default class LayerManager {
   delegate(method, drawing, ...args) {
     if (drawing.type === 'lines') return this.brushes.lines[method](drawing, ...args);
     else if (drawing.type === 'shaky') return this.brushes.shaky[method](drawing, ...args);
+    else if (drawing.type === 'paper') return this.brushes.paper[method](drawing, ...args);
     else console.error(`LayerManager.delegate: Unknown drawing type ${drawing.type}`);
     return undefined;
   }
@@ -102,6 +107,8 @@ export default class LayerManager {
         return this.brushes.lines;
       case 'shaky':
         return this.brushes.shaky;
+      case 'paper':
+        return this.brushes.paper;
       default:
         console.error(`Unknown brush type: ${type}`);
         return undefined;

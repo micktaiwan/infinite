@@ -81,8 +81,9 @@ export default class BoardLayer extends Layer {
     // with a pointer, move is triggered also with a tilt
     if (this.cursorX === this.prevCursorX && this.cursorY === this.prevCursorY) return;
 
-    const scaledX = this.toTrueX(this.cursorX);
-    const scaledY = this.toTrueY(this.cursorY);
+    this.trueX = this.toTrueX(this.cursorX);
+    this.trueY = this.toTrueY(this.cursorY);
+
     this.pressure = event.pressure * this.manager.brush.options.maxSize;
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
@@ -116,7 +117,7 @@ export default class BoardLayer extends Layer {
         const size = event.pressure * self.eraserSize;
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
-          this.manager.delegate('eraseCircle', drawing, scaledX, scaledY, size / this.scale, changes);
+          this.manager.delegate('eraseCircle', drawing, this.trueX, this.trueY, size / this.scale, changes);
         });
         if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
       });
@@ -170,7 +171,6 @@ export default class BoardLayer extends Layer {
     if (this.hidden) return;
 
     this.updateCursorPos(event);
-    this.lines = [];
 
     if (event.button === 0) { // left
       this.leftMouseDown = true;
@@ -180,15 +180,20 @@ export default class BoardLayer extends Layer {
       this.leftMouseDown = false;
       this.startPan(event);
     }
+
+    this.manager.brush.mouseDown(this);
   }
 
-  onMouseUp() {
+  onMouseUp(event) {
     if (this.hidden) return;
 
+    this.updateCursorPos(event);
     this.leftMouseDown = false;
     this.rightMouseDown = false;
     this.saveDrawings();
     if (this.panning) this.stopPan();
+
+    this.manager.brush.mouseUp(this);
   }
 
   notDrawingActionInProgress() {

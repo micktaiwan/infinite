@@ -18,4 +18,12 @@ export default class Brush {
   saveDrawings() {
     return Meteor.userId();
   }
+
+  mouseDown(layer) {
+    // console.log('Brush: mouse down');
+  }
+
+  mouseUp(layer) {
+    // console.log('Brush: mouse up');
+  }
 }

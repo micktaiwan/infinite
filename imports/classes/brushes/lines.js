@@ -1,5 +1,4 @@
 import Brush from './brush';
-import { Drawings } from '../../api/books/collections';
 import Helpers from '../helpers';
 
 export default class LinesBrush extends Brush {
@@ -12,8 +11,6 @@ export default class LinesBrush extends Brush {
 
   // create a new drawing
   draw(layer) {
-    const scaledX = layer.toTrueX(layer.cursorX);
-    const scaledY = layer.toTrueY(layer.cursorY);
     const prevScaledX = layer.toTrueX(layer.prevCursorX);
     const prevScaledY = layer.toTrueY(layer.prevCursorY);
 
@@ -22,8 +19,8 @@ export default class LinesBrush extends Brush {
       pressure: layer.pressure,
       x0: prevScaledX,
       y0: prevScaledY,
-      x1: scaledX,
-      y1: scaledY,
+      x1: layer.trueX,
+      y1: layer.trueY,
       color: layer.color,
     });
   }
@@ -58,28 +55,28 @@ export default class LinesBrush extends Brush {
     }
   }
 
-  drawPath(drawing, layer) {
-    if (drawing.lines.length === 0) return;
-    // this.ctx.lineWidth = line.pressure * ratio;
-    layer.ctx.beginPath();
-    layer.ctx.moveTo(layer.toScreenX(drawing.lines[0].x0), layer.toScreenY(drawing.lines[0].y0));
+  // drawPath(drawing, layer) {
+  //   if (drawing.lines.length === 0) return;
+  //   // this.ctx.lineWidth = line.pressure * ratio;
+  //   layer.ctx.beginPath();
+  //   layer.ctx.moveTo(layer.toScreenX(drawing.lines[0].x0), layer.toScreenY(drawing.lines[0].y0));
 
-    for (let j = 0; j < drawing.lines.length; j++) {
-      const line = drawing.lines[j];
-      const ratio = layer.scale / line.scale;
-      if (ratio > 0.05 && ratio < 100) {
-        layer.ctx.strokeStyle = this.color;
-        layer.ctx.lineWidth = 1;
-        if (j > 1 && Helpers.dist(drawing.lines[j - 1].x0, drawing.lines[j - 1].y0, line.x0, line.y0) < 20) {
-          layer.ctx.lineTo(layer.toScreenX(line.x1), layer.toScreenY(line.y1));
-        } else {
-          layer.ctx.moveTo(layer.toScreenX(line.x0), layer.toScreenY(line.y0));
-        }
-        layer.ctx.stroke();
-      }
-    }
-    layer.ctx.closePath();
-  }
+  //   for (let j = 0; j < drawing.lines.length; j++) {
+  //     const line = drawing.lines[j];
+  //     const ratio = layer.scale / line.scale;
+  //     if (ratio > 0.05 && ratio < 100) {
+  //       layer.ctx.strokeStyle = this.color;
+  //       layer.ctx.lineWidth = 1;
+  //       if (j > 1 && Helpers.dist(drawing.lines[j - 1].x0, drawing.lines[j - 1].y0, line.x0, line.y0) < 20) {
+  //         layer.ctx.lineTo(layer.toScreenX(line.x1), layer.toScreenY(line.y1));
+  //       } else {
+  //         layer.ctx.moveTo(layer.toScreenX(line.x0), layer.toScreenY(line.y0));
+  //       }
+  //       layer.ctx.stroke();
+  //     }
+  //   }
+  //   layer.ctx.closePath();
+  // }
 
   saveDrawings(layer) {
     if (!super.saveDrawings()) return;
