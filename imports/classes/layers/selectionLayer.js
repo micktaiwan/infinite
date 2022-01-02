@@ -21,6 +21,7 @@ export default class SelectionLayer extends Layer {
     if (event.key === 'z' && (event.metaKey || event.ctrlKey)) this.undo();
     else if (event.key === 'z') this.startPan();
     else if (event.key === 'a') this.startZooming();
+    else if (event.key === 'r') this.startWeight();
   }
 
   onKeyUp(event) {
@@ -29,7 +30,18 @@ export default class SelectionLayer extends Layer {
     if (event.key === 'z') this.stopPan();
     else if (event.key === 'a') this.stopZooming();
     else if (event.key === 'e' && this.selection) this.clearSelection();
+    else if (event.key === 'r') this.stopWeight();
     else if (event.key === 'Escape') this.cancelSelection();
+  }
+
+  startWeight() {
+    this.startX = this.cursorX;
+    this.startY = this.cursorY;
+    this.weighting = true;
+  }
+
+  stopWeight() {
+    this.weighting = false;
   }
 
   onMouseMove(event) {
@@ -48,6 +60,13 @@ export default class SelectionLayer extends Layer {
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
       }
+      return;
+    }
+
+    if (this.weighting) {
+      this.weight(event);
+      this.prevCursorX = this.cursorX;
+      this.prevCursorY = this.cursorY;
       return;
     }
 
@@ -209,7 +228,6 @@ export default class SelectionLayer extends Layer {
 
   pointerZoom() {
     const reverse = Math.sign(this.prevCursorY - this.cursorY);
-    // const deltaX = Math.abs(this.startX - this.cursorX);
     const deltaY = Math.abs(this.startY - this.cursorY);
     const scaleAmount = reverse * deltaY / 1000;
     this.scale *= (1 + scaleAmount);
@@ -228,6 +246,24 @@ export default class SelectionLayer extends Layer {
     this.offsetY -= unitsAddTop;
 
     this.scaleSelection();
+
+    this.redraw();
+  }
+
+  weight() {
+    const reverse = Math.sign(this.prevCursorY - this.cursorY);
+    let deltaY = Math.abs(this.startY - this.cursorY);
+    if (deltaY > 20) deltaY = 20;
+    const scaleAmount = reverse * deltaY / 1000;
+
+    this.drawings.forEach(drawing => {
+      if (drawing.type === 'lines' || drawing.type === 'shaky') {
+        drawing.lines.forEach(line => {
+          line.pressure *= (1 + scaleAmount);
+          if (line.pressure < 0.1) line.pressure = 0.1;
+        });
+      }
+    });
 
     this.redraw();
   }
