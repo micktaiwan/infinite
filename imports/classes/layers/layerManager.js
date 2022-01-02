@@ -1,10 +1,10 @@
 /* eslint-disable import/no-import-module-exports */
 // const Layer = require('./layer');
-import LinesBrush from './brushes/lines';
-import ShakyBrush from './brushes/shaky';
+import LinesBrush from '../brushes/lines';
+import ShakyBrush from '../brushes/shaky';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
-import { Layers } from '../api/books/collections';
+import { Layers } from '../../api/books/collections';
 
 // const imageTracer = require('./lib/imagetracer');
 
@@ -27,7 +27,14 @@ export default class LayerManager {
       shaky: new ShakyBrush(),
     };
     this.brush = this.brushes.lines;
-    this.loadPrefs();
+
+    Tracker.autorun(() => {
+      this.userId = Meteor.userId();
+      if (this.userId) {
+        this.brush.saveDrawings();
+        this.loadPrefs();
+      }
+    });
 
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
@@ -63,6 +70,7 @@ export default class LayerManager {
   }
 
   savePrefs() {
+    if (!this.userId) return;
     const prefs = {
       brush: this.brush.type,
       brushOptions: this.brush.options,

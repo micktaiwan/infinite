@@ -19,21 +19,15 @@ import { Drawings, Books, Layers } from './collections';
 Meteor.methods({
 
   booksInsert() {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     Books.insert({
       title: `${Meteor.user().profile.name}'s book`,
       userIds: [this.userId],
     });
   },
 
-  booksAddUser(bookId) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
-    if (!bookId) throw new Meteor.Error('no-book-id');
-    Books.update(bookId, { $addToSet: { userIds: this.userId } });
-  },
-
   bookUpdate(bookId, data) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     if (!bookId) throw new Meteor.Error('no-book-id');
     if (!data) throw new Meteor.Error('no-data');
     const book = Books.findOne(bookId);
@@ -43,7 +37,7 @@ Meteor.methods({
   },
 
   saveDrawings(obj) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     let order = Drawings.findOne({ bookId: obj.bookId, layerIndex: obj.layerIndex }, { sort: { order: -1 } })?.order || 0;
     order++;
     Drawings.insert(_.extend(obj, {
@@ -53,7 +47,7 @@ Meteor.methods({
   },
 
   undo(bookId, layerIndex) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     if (!bookId) throw new Meteor.Error('no-book-id');
     const lastLine = Drawings.findOne({ bookId, layerIndex }, { sort: { order: -1 } });
     if (!lastLine) return;
@@ -61,13 +55,13 @@ Meteor.methods({
   },
 
   updateDrawings(id, lines) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     if (lines.length === 0) Drawings.remove(id);
     else Drawings.update(id, { $set: { lines } });
   },
 
   updateDrawingsBatch(changes) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     changes.forEach(({ id, type, $set }) => {
       if (type === 'removed') {
         Drawings.remove(id);
@@ -78,22 +72,22 @@ Meteor.methods({
   },
 
   addLayer(bookId, index) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     return Layers.insert({ bookId, index, userId: this.userId });
   },
 
   savePosition(bookId, index, position) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     return Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
   },
 
   toggleLayer(id, hidden) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     return Layers.update(id, { $set: { [`positions.${Meteor.userId()}.hidden`]: hidden } });
   },
 
   removeLayer(_id) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     if (!_id) throw new Meteor.Error('no-layer-id');
     const layer = Layers.findOne(_id);
     Drawings.remove({ bookId: layer.bookId, layerIndex: layer.index });
@@ -101,7 +95,7 @@ Meteor.methods({
   },
 
   savePrefs(prefs) {
-    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!this.userId) return;
     Meteor.users.update(this.userId, { $set: { 'profile.prefs': prefs } });
   },
 

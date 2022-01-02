@@ -82,6 +82,7 @@ export default class LinesBrush extends Brush {
   }
 
   saveDrawings(layer) {
+    if (!super.saveDrawings()) return;
     if (!this.lines.length) return;
     Meteor.call('saveDrawings', { type: this.type, lines: this.lines, layerIndex: layer.index, bookId: layer.bookId });
     this.lines = [];

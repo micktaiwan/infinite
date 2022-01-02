@@ -14,4 +14,8 @@ export default class Brush {
   sensitivityOverflow(pressure) {
     return pressure < this.options.minSensitivity;
   }
+
+  saveDrawings() {
+    return Meteor.userId();
+  }
 }

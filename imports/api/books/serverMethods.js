@@ -2,6 +2,12 @@ import { Drawings, Books, Layers } from './collections';
 
 Meteor.methods({
 
+  booksAddUser(bookId) {
+    if (!this.userId) throw new Meteor.Error('not-authorized');
+    if (!bookId) throw new Meteor.Error('no-book-id');
+    Books.update(bookId, { $addToSet: { userIds: this.userId } });
+  },
+
   stats() {
     const stats = {};
     Books.find({ userIds: this.userId }).forEach(book => {

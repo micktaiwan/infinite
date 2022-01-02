@@ -1,15 +1,12 @@
 import Layer from './layer';
-import { Drawings } from '../api/books/collections';
-import LinesBrush from './brushes/lines';
-
-import Helpers from './helpers';
+import { Drawings } from '../../api/books/collections';
 
 export default class BoardLayer extends Layer {
   constructor(manager, _id, fields) {
     super(manager, _id, fields);
     this.hidden = false;
     if (fields.positions) {
-      const p = fields.positions[this.userId];
+      const p = fields.positions[this.manager.userId];
       if (p) {
         if (p.scale !== undefined) this.scale = p.scale;
         if (p.offsetX !== undefined) this.offsetX = p.offsetX;
@@ -32,11 +29,11 @@ export default class BoardLayer extends Layer {
     const self = this;
     this.observeChangesHandler = Drawings.find({ bookId: self.bookId, layerIndex: self.index }).observeChanges({
       added: (id, drawing) => {
-        if (drawing.userId !== self.userId) self.redraw();
+        if (!self.manager.userId || drawing.userId !== self.manager.userId) self.redraw();
       },
       changed: (id, doc) => {
         const drawing = Drawings.findOne(id);
-        if (drawing.userId !== self.userId && !self.notDrawingActionInProgress()) self.redraw();
+        if (drawing.userId !== self.manager.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
       removed: id => {
         if (!self.sel.selectionOriginLayer && !Drawings.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
@@ -287,6 +284,10 @@ export default class BoardLayer extends Layer {
     this.redraw();
   }
 
+  saveDrawings() {
+    this.manager.brush.saveDrawings(this);
+  }
+
   startEraser() {
     this.erasing = true;
     this.drawEraser(this.cursorX, this.cursorY);
@@ -294,7 +295,7 @@ export default class BoardLayer extends Layer {
 
   stopEraser() {
     this.erasing = false;
-    this.saveDrawings(true);
+    this.saveDrawings();
     this.sel.redraw();
     this.redraw();
   }
@@ -352,10 +353,6 @@ export default class BoardLayer extends Layer {
 
   savePosition() {
     Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
-  }
-
-  saveDrawings() {
-    this.manager.brush.saveDrawings(this);
   }
 
   reset(redraw = true) {
@@ -449,8 +446,10 @@ export default class BoardLayer extends Layer {
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
+    console.log('drawing layer', this.index);
 
     Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
+      console.log(drawing);
       if (drawing.type === 'lines') this.manager.brushes.lines.drawing(drawing, this);
       else if (drawing.type === 'shaky') this.manager.brushes.shaky.drawing(drawing, this);
       else console.log('unknown drawing type', drawing.type);
@@ -459,7 +458,6 @@ export default class BoardLayer extends Layer {
 
   redraw() {
     if (this.destroyed) return;
-    const self = this;
-    requestAnimationFrame(self.draw.bind(self));
+    requestAnimationFrame(this.draw.bind(this));
   }
 }

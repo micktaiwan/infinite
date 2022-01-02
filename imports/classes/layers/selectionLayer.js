@@ -1,5 +1,5 @@
 import Layer from './layer';
-import { Drawings } from '../api/books/collections';
+import { Drawings } from '../../api/books/collections';
 
 export default class SelectionLayer extends Layer {
   constructor(manager) {

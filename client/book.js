@@ -1,22 +1,23 @@
 import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
-import LayerManager from '../imports/classes/layerManager';
+import LayerManager from '../imports/classes/layers/layerManager';
 import { Layers } from '../imports/api/books/collections';
 
 import './book.html';
 
 Template.book.onRendered(function () {
+  const bookId = FlowRouter.getParam('bookId');
   this.autorun(() => {
     if (!Meteor.userId()) return;
-    const bookId = FlowRouter.getParam('bookId');
+    console.log('bookId', bookId);
     Meteor.call('booksAddUser', bookId);
-    this.manager = new LayerManager(bookId);
-    const self = this;
-    this.subscribe('layers', bookId, () => {
-      Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
-      Meteor.defer(() => {
-        self.subscribe('lines', bookId, () => {
-          self.manager.redraw();
-        });
+  });
+  this.manager = new LayerManager(bookId);
+  const self = this;
+  this.subscribe('layers', bookId, () => {
+    Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
+    Meteor.defer(() => {
+      self.subscribe('lines', bookId, () => {
+        self.manager.redraw();
       });
     });
   });

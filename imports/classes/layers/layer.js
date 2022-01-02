@@ -1,4 +1,4 @@
-import Helpers from './helpers';
+import Helpers from '../helpers';
 
 export default class Layer {
   constructor(manager, _id, fields) {
@@ -6,7 +6,6 @@ export default class Layer {
     this.manager = manager;
     this.index = fields?.index;
     this.bookId = manager.bookId;
-    this.userId = Meteor.userId();
     this.color = '#000';
     this.eraserSize = 40;
     this.pressure = this.manager.brush.options.maxSize;
