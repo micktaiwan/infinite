@@ -20,7 +20,6 @@ export default class PaperBrush extends Brush {
   }
 
   mouseUp(layer) {
-    // console.log('mouse up');
     if (!this.path) return;
     this.simplify();
   }
@@ -83,9 +82,44 @@ export default class PaperBrush extends Brush {
     }
   }
 
+  normalize() {
+    if (!this.path || this.path.segments.length < 2) return 1;
+    let averageDistance = 0;
+    for (let i = 1; i < this.path.segments.length - 1; i++) {
+      const s = this.path.segments[i];
+      const prev = this.path.segments[i - 1];
+      const dist = Helpers.dist(s.point.x, s.point.y, prev.point.x, prev.point.y);
+      if (dist > averageDistance) averageDistance = dist;
+    }
+    console.log('average distance', averageDistance);
+    if (averageDistance < 1 || averageDistance > 25) {
+      const factor = 10 / averageDistance;
+      this.path.scale(factor);
+
+      let averageDistance2 = 0;
+      for (let i = 1; i < this.path.segments.length - 1; i++) {
+        const s = this.path.segments[i];
+        const prev = this.path.segments[i - 1];
+        const dist = Helpers.dist(s.point.x, s.point.y, prev.point.x, prev.point.y);
+        if (dist > averageDistance2) averageDistance2 = dist;
+      }
+      console.log('average distance2', averageDistance2);
+
+      return factor;
+    }
+    return 1;
+  }
+
+  unnormalize(factor) {
+    this.path.scale(1 / factor);
+  }
+
   simplify(x = 2.5) {
+    // TODO: normalize before simplifying: find the average distance between points, and if too low, zoom in
+    const factor = this.normalize();
     const segmentCount = this.path.segments.length;
     this.path.simplify(x);
+    this.unnormalize(factor);
     // this.path.smooth();
 
     const newSegmentCount = this.path.segments.length;
@@ -113,6 +147,7 @@ export default class PaperBrush extends Brush {
   saveDrawings(layer) {
     if (!super.saveDrawings()) return;
     if (!this.path) return;
+    this.simplify(0.1);
     Meteor.call('saveDrawings', this.toDrawing(this.path, layer));
     this.path = undefined;
   }
@@ -123,8 +158,7 @@ export default class PaperBrush extends Brush {
     const foundLines = [];
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (Helpers.dist(line.x0, line.y0, x, y) < size ||
-          Helpers.dist(line.x1, line.y1, x, y) < size) {
+      if (Helpers.dist(line.point.x, line.point.y, x, y) < size) {
         foundLines.push(line);
         lines.splice(i, 1);
         i--;
@@ -139,7 +173,7 @@ export default class PaperBrush extends Brush {
     return changed;
   }
 
-  // too simple, must take into account paths to be slit in half
+  // TODO: too simple, must take into account paths to be slit in half
   eraseRectangle(drawing, x, y, width, height, changes) {
     let changed = false;
     const { lines } = drawing;
@@ -164,21 +198,16 @@ export default class PaperBrush extends Brush {
 
   scaleAndSaveDrawing(drawing, from, dest) {
     drawing.lines.forEach(line => {
-      // console.log(line);
       line.point.x = dest.toTrueX(from.scale * (line.point.x + from.offsetX));
       line.point.y = dest.toTrueY(from.scale * (line.point.y + from.offsetY));
-
-      // line.handleIn = { x: dest.toTrueX(from.scale * (line.in.x)), y: dest.toTrueY(from.scale * (line.in.y)) };
-      // line.handleOut = { x: dest.toTrueX(from.scale * (line.out.x)), y: dest.toTrueY(from.scale * (line.out.y)) };
-
       line.handleIn = { x: line.in.x, y: line.in.y };
       line.handleOut = { x: line.out.x, y: line.out.y };
-      // console.log(line);
     });
     this.path = { segments: drawing.lines };
     this.saveDrawings(dest);
   }
 
+  // TODO
   changePressure(drawing, scaleAmount) {
     drawing.lines.forEach(line => {
       line.pressure *= scaleAmount;
@@ -186,6 +215,7 @@ export default class PaperBrush extends Brush {
     });
   }
 
+  // TODO
   boundingBox(drawing, layer, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity) {
     drawing.lines.forEach(line => {
       if (layer.toScreenX(line.x0) < minX) minX = layer.toScreenX(line.x0);

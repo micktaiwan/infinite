@@ -36,7 +36,6 @@ export default class BoardLayer extends Layer {
         if (drawing.userId !== self.manager.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
       removed: id => {
-        if (!self.sel.selectionOriginLayer && !Drawings.findOne({ bookId: self.bookId, layerIndex: self.index })) self.reset(false);
         if (!self.notDrawingActionInProgress()) self.redraw();
       },
     });
@@ -450,9 +449,13 @@ export default class BoardLayer extends Layer {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.hidden) return;
 
-    Drawings.find({ bookId: this.bookId, layerIndex: this.index }).forEach(drawing => {
-      this.manager.delegate('drawing', drawing, this);
-    });
+    const cursor = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
+    if (cursor.count() === 0) super.reset(false);
+    else {
+      cursor.forEach(drawing => {
+        this.manager.delegate('drawing', drawing, this);
+      });
+    }
   }
 
   redraw() {
