@@ -8,7 +8,6 @@ Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
   this.autorun(() => {
     if (!Meteor.userId()) return;
-    console.log('bookId', bookId);
     Meteor.call('booksAddUser', bookId);
   });
   this.manager = new LayerManager(bookId);
