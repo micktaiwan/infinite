@@ -43,7 +43,7 @@ export default class BoardLayer extends Layer {
 
   remove() {
     this.observeChangesHandler.stop();
-    Meteor.call('removeLayer', this._id);
+    Meteor.callAsync('removeLayer', this._id);
   }
 
   onKeyDown(event) {
@@ -84,6 +84,8 @@ export default class BoardLayer extends Layer {
     this.trueY = this.toTrueY(this.cursorY);
 
     this.pressure = event.pressure * this.manager.brush.options.maxSize;
+    Session.set('pressure', event.pressure);
+    Session.set('pointerType', event.pointerType);
     const dist = this.dist(this.cursorX, this.cursorY, this.prevCursorX, this.prevCursorY, false);
 
     if (this.zooming) {
@@ -112,13 +114,14 @@ export default class BoardLayer extends Layer {
       if (!this.leftMouseDown) return;
 
       const self = this;
+      const pressure = event.pressure || 0.5;
       Meteor.defer(() => {
-        const size = event.pressure * self.eraserSize;
+        const size = pressure * self.eraserSize;
         const changes = [];
         Drawings.find({ bookId: self.bookId, layerIndex: self.index }).forEach(drawing => {
           this.manager.delegate('eraseCircle', drawing, this.trueX, this.trueY, size / this.scale, changes);
         });
-        if (changes.length > 0) Meteor.call('updateDrawingsBatch', changes);
+        if (changes.length > 0) Meteor.callAsync('updateDrawingsBatch', changes);
       });
       self.prevCursorX = self.cursorX;
       self.prevCursorY = self.cursorY;
@@ -347,14 +350,14 @@ export default class BoardLayer extends Layer {
     objs.forEach(drawing => {
       this.manager.delegate('eraseRectangle', drawing, this.toTrueX(x), this.toTrueY(y), width / this.scale, height / this.scale, foundDrawings);
     });
-    if (foundDrawings.length) Meteor.call('updateDrawingsBatch', foundDrawings);
+    if (foundDrawings.length) Meteor.callAsync('updateDrawingsBatch', foundDrawings);
     this.sel.drawings = foundDrawings.map(f => f.drawings);
     this.redraw();
     this.sel.redraw();
   }
 
   savePosition() {
-    Meteor.call('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
+    Meteor.callAsync('savePosition', this.bookId, this.index, { scale: this.scale, offsetX: this.offsetX, offsetY: this.offsetY, hidden: this.hidden });
   }
 
   reset(redraw = true) {
@@ -387,7 +390,7 @@ export default class BoardLayer extends Layer {
   }
 
   undo() {
-    Meteor.call('undo', this.bookId, this.index);
+    Meteor.callAsync('undo', this.bookId, this.index);
   }
 
   wheelZoom(event) {

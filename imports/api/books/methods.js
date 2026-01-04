@@ -1,102 +1,92 @@
 import { Drawings, Books, Layers } from './collections';
 
-// splice lines in group of 100
-
-// function saveDrawings(lines, bookId, layerIndex) {
-//   let order = Drawings.findOne({ bookId, layerIndex }, { sort: { order: -1 } })?.order || 0;
-//   for (let i = 0; i < lines.length; i += 100) {
-//     order++;
-//     Drawings.insert({
-//       bookId,
-//       layerIndex,
-//       order,
-//       lines: lines.slice(i, i + 100),
-//       userId: this.userId,
-//     });
-//   }
-// }
-
 Meteor.methods({
 
-  booksInsert() {
+  async booksInsert() {
     if (!this.userId) return;
-    Books.insert({
-      title: `${Meteor.user().profile.name}'s book`,
+    const user = await Meteor.userAsync();
+    const name = user.profile?.name || user.emails?.[0]?.address || 'My';
+    await Books.insertAsync({
+      title: `${name}'s book`,
       userIds: [this.userId],
     });
   },
 
-  bookUpdate(bookId, data) {
+  async bookUpdate(bookId, data) {
     if (!this.userId) return;
     if (!bookId) throw new Meteor.Error('no-book-id');
     if (!data) throw new Meteor.Error('no-data');
-    const book = Books.findOne(bookId);
+    const book = await Books.findOneAsync(bookId);
     if (!book) throw new Meteor.Error('no-book');
     if (!book.userIds.includes(this.userId)) throw new Meteor.Error('not-authorized');
-    Books.update(bookId, { $set: data });
+    await Books.updateAsync(bookId, { $set: data });
   },
 
-  saveDrawings(obj) {
+  async saveDrawings(obj) {
     if (!this.userId) return;
-    let order = Drawings.findOne({ bookId: obj.bookId, layerIndex: obj.layerIndex }, { sort: { order: -1 } })?.order || 0;
+    const lastDrawing = await Drawings.findOneAsync(
+      { bookId: obj.bookId, layerIndex: obj.layerIndex },
+      { sort: { order: -1 } },
+    );
+    let order = lastDrawing?.order || 0;
     order++;
-    Drawings.insert(_.extend(obj, {
+    await Drawings.insertAsync(_.extend(obj, {
       order,
       userId: this.userId,
     }));
   },
 
-  undo(bookId, layerIndex) {
+  async undo(bookId, layerIndex) {
     if (!this.userId) return;
     if (!bookId) throw new Meteor.Error('no-book-id');
-    const lastLine = Drawings.findOne({ bookId, layerIndex }, { sort: { order: -1 } });
+    const lastLine = await Drawings.findOneAsync({ bookId, layerIndex }, { sort: { order: -1 } });
     if (!lastLine) return;
-    Drawings.remove(lastLine._id);
+    await Drawings.removeAsync(lastLine._id);
   },
 
-  updateDrawings(id, lines) {
+  async updateDrawings(id, lines) {
     if (!this.userId) return;
-    if (lines.length === 0) Drawings.remove(id);
-    else Drawings.update(id, { $set: { lines } });
+    if (lines.length === 0) await Drawings.removeAsync(id);
+    else await Drawings.updateAsync(id, { $set: { lines } });
   },
 
-  updateDrawingsBatch(changes) {
+  async updateDrawingsBatch(changes) {
     if (!this.userId) return;
-    changes.forEach(({ id, type, $set }) => {
+    for (const { id, type, $set } of changes) {
       if (type === 'removed') {
-        Drawings.remove(id);
+        await Drawings.removeAsync(id);
       } else {
-        Drawings.update(id, { $set });
+        await Drawings.updateAsync(id, { $set });
       }
-    });
+    }
   },
 
-  addLayer(bookId, index) {
+  async addLayer(bookId, index) {
     if (!this.userId) return;
-    return Layers.insert({ bookId, index, userId: this.userId });
+    return Layers.insertAsync({ bookId, index, userId: this.userId });
   },
 
-  savePosition(bookId, index, position) {
+  async savePosition(bookId, index, position) {
     if (!this.userId) return;
-    return Layers.update({ bookId, index }, { $set: { [`positions.${Meteor.userId()}`]: position } });
+    return Layers.updateAsync({ bookId, index }, { $set: { [`positions.${this.userId}`]: position } });
   },
 
-  toggleLayer(id, hidden) {
+  async toggleLayer(id, hidden) {
     if (!this.userId) return;
-    return Layers.update(id, { $set: { [`positions.${Meteor.userId()}.hidden`]: hidden } });
+    return Layers.updateAsync(id, { $set: { [`positions.${this.userId}.hidden`]: hidden } });
   },
 
-  removeLayer(_id) {
+  async removeLayer(_id) {
     if (!this.userId) return;
     if (!_id) throw new Meteor.Error('no-layer-id');
-    const layer = Layers.findOne(_id);
-    Drawings.remove({ bookId: layer.bookId, layerIndex: layer.index });
-    return Layers.remove(_id);
+    const layer = await Layers.findOneAsync(_id);
+    await Drawings.removeAsync({ bookId: layer.bookId, layerIndex: layer.index });
+    return Layers.removeAsync(_id);
   },
 
-  savePrefs(prefs) {
+  async savePrefs(prefs) {
     if (!this.userId) return;
-    Meteor.users.update(this.userId, { $set: { 'profile.prefs': prefs } });
+    await Meteor.users.updateAsync(this.userId, { $set: { 'profile.prefs': prefs } });
   },
 
 });

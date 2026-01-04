@@ -10,5 +10,5 @@ Template.registerHelper('pluralize', (v, name) => {
 });
 
 admin = function (js) {
-  Meteor.call('admin', js, (err, res) => { console.log(res); });
+  Meteor.callAsync('admin', js).then(res => console.log(res)).catch(err => console.error(err));
 };

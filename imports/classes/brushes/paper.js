@@ -132,7 +132,7 @@ export default class PaperBrush extends Brush {
     if (!super.saveDrawings()) return;
     if (!this.path) return;
     this.simplify(0.1);
-    Meteor.call('saveDrawings', this.toDrawing(this.path, layer));
+    Meteor.callAsync('saveDrawings', this.toDrawing(this.path, layer));
     this.path = undefined;
   }
 

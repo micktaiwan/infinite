@@ -8,7 +8,7 @@ Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
   this.autorun(() => {
     if (!Meteor.userId()) return;
-    Meteor.call('booksAddUser', bookId);
+    Meteor.callAsync('booksAddUser', bookId);
   });
   this.manager = new LayerManager(bookId);
   const self = this;
@@ -35,6 +35,11 @@ Template.book.helpers({
   active(index) {
     if (Layers.findOne({ bookId: FlowRouter.getParam('bookId'), index }).positions?.[Meteor.userId()]?.hidden) return 'hidden';
     return index === Session.get('activeLayer') ? 'active' : '';
+  },
+  pressure() {
+    const type = Session.get('pointerType') || '?';
+    const pressure = Session.get('pressure')?.toFixed(2) || '0.00';
+    return `${pressure} (${type})`;
   },
 });
 

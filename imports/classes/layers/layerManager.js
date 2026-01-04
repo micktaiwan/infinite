@@ -87,17 +87,15 @@ export default class LayerManager {
       brush: this.brush.type,
       brushOptions: this.brush.options,
     };
-    Meteor.call('savePrefs', prefs);
+    Meteor.callAsync('savePrefs', prefs);
   }
 
   loadPrefs() {
-    Tracker.autorun(() => { // why is this needed ???
+    Tracker.autorun(() => {
       const user = Meteor.user();
-      if (!user) return;
+      if (!user?.profile?.prefs) return;
       const { prefs } = user.profile;
-      if (prefs) {
-        this.setBrush(this.brushForType(prefs.brush), prefs.brushOptions);
-      }
+      this.setBrush(this.brushForType(prefs.brush), prefs.brushOptions);
     });
   }
 
@@ -117,7 +115,7 @@ export default class LayerManager {
 
   toggleLayer() {
     this.layers[this.currentLayer].hidden = !this.layers[this.currentLayer].hidden;
-    Meteor.call('toggleLayer', this.layers[this.currentLayer]._id, this.layers[this.currentLayer].hidden);
+    Meteor.callAsync('toggleLayer', this.layers[this.currentLayer]._id, this.layers[this.currentLayer].hidden);
     this.redraw();
   }
 
@@ -180,7 +178,7 @@ export default class LayerManager {
   }
 
   addLayer() {
-    Meteor.call('addLayer', this.bookId, this.layers.length);
+    Meteor.callAsync('addLayer', this.bookId, this.layers.length);
   }
 
   getActiveLayer() {

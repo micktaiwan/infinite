@@ -4,7 +4,7 @@ import { Books } from '../imports/api/books/collections';
 
 Template.home.onCreated(function () {
   this.subscribe('books');
-  Meteor.call('stats', (err, res) => {
+  Meteor.callAsync('stats').then(res => {
     Session.set('stats', res);
   });
 });
@@ -16,7 +16,7 @@ Template.home.helpers({
 Template.home.events({
   'click .js-insert-book'() {
     if (!Meteor.userId()) { alert('Please log in to add a book'); return; }
-    Meteor.call('booksInsert');
+    Meteor.callAsync('booksInsert');
   },
 });
 
@@ -30,7 +30,7 @@ Template.bookCover.events({
     if (e.keyCode !== 13) return;
     e.preventDefault();
     const title = $(e.target).text();
-    Meteor.call('bookUpdate', this._id, { title });
+    Meteor.callAsync('bookUpdate', this._id, { title });
     e.target.blur();
   },
 });
