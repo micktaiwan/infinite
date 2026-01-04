@@ -32,18 +32,23 @@ export default class LayerManager {
     };
     this.brush = this.brushes.lines;
 
-    Tracker.autorun(() => {
+    // Store autorun handles for cleanup
+    this._autorunHandles = [];
+    this._prefsAutorunHandle = null;
+
+    this._autorunHandles.push(Tracker.autorun(() => {
       this.userId = Meteor.userId();
       if (this.userId) {
         this.brush.saveDrawings();
         this.loadPrefs();
       }
-    });
+    }));
 
     this.selectionLayer = new SelectionLayer(this);
     this.currentLayer = 0;
 
     // disable right clicking
+    this._originalContextMenu = document.oncontextmenu;
     document.oncontextmenu = () => false;
 
     this.initializing = true;
@@ -64,7 +69,9 @@ export default class LayerManager {
     });
     this.initializing = false;
 
-    window.addEventListener('resize', () => this.redraw());
+    // Store resize handler for cleanup
+    this._resizeHandler = () => this.redraw();
+    window.addEventListener('resize', this._resizeHandler);
   }
 
   delegate(method, drawing, ...args) {
@@ -91,11 +98,16 @@ export default class LayerManager {
   }
 
   loadPrefs() {
-    Tracker.autorun(() => {
+    // Stop any previous prefs autorun to prevent accumulation
+    if (this._prefsAutorunHandle) {
+      this._prefsAutorunHandle.stop();
+    }
+    this._prefsAutorunHandle = Tracker.autorun(() => {
       const user = Meteor.user();
       if (!user?.profile?.prefs) return;
       const { prefs } = user.profile;
-      this.setBrush(this.brushForType(prefs.brush), prefs.brushOptions);
+      const brush = this.brushForType(prefs.brush);
+      if (brush) this.setBrush(brush, prefs.brushOptions);
     });
   }
 
@@ -129,7 +141,25 @@ export default class LayerManager {
   destroy() {
     this.destroyed = true;
     console.log('LayerManager: destroy');
+
+    // Stop all autoruns
+    this._autorunHandles.forEach(handle => handle.stop());
+    this._autorunHandles = [];
+    if (this._prefsAutorunHandle) {
+      this._prefsAutorunHandle.stop();
+      this._prefsAutorunHandle = null;
+    }
+
+    // Stop observe handle
     this.observeHandle.stop();
+
+    // Remove resize listener
+    window.removeEventListener('resize', this._resizeHandler);
+
+    // Restore context menu
+    document.oncontextmenu = this._originalContextMenu;
+
+    // Destroy layers
     this.layers.forEach(layer => {
       layer.destroy();
     });
