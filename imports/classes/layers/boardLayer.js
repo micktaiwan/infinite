@@ -220,7 +220,7 @@ export default class BoardLayer extends Layer {
     this.selCtx.strokeStyle = '#000';
   }
 
-  stopStraightLine() {
+  async stopStraightLine() {
     this.straightLine = false;
     this.manager.brushes.lines.straitLine(
       this,
@@ -234,7 +234,7 @@ export default class BoardLayer extends Layer {
         color: this.color,
       },
     );
-    this.manager.brushes.lines.saveDrawings(this);
+    await this.manager.brushes.lines.saveDrawings(this);
     this.redraw();
     this.sel.redraw();
   }
@@ -247,7 +247,7 @@ export default class BoardLayer extends Layer {
     this.selCtx.strokeStyle = '#000';
   }
 
-  stopRectangle() {
+  async stopRectangle() {
     this.rectangle = false;
     this.manager.brushes.lines.straitLine(this, {
       scale: this.scale,
@@ -285,7 +285,7 @@ export default class BoardLayer extends Layer {
       y1: this.toTrueY(this.startY),
       color: this.color,
     });
-    this.manager.brushes.lines.saveDrawings(this);
+    await this.manager.brushes.lines.saveDrawings(this);
     this.sel.redraw();
     this.redraw();
   }

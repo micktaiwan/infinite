@@ -78,10 +78,10 @@ export default class LinesBrush extends Brush {
   //   layer.ctx.closePath();
   // }
 
-  saveDrawings(layer) {
+  async saveDrawings(layer) {
     if (!super.saveDrawings()) return;
     if (!this.lines.length) return;
-    Meteor.callAsync('saveDrawings', { type: this.type, lines: this.lines, layerIndex: layer.index, bookId: layer.bookId });
+    await Meteor.callAsync('saveDrawings', { type: this.type, lines: this.lines, layerIndex: layer.index, bookId: layer.bookId });
     this.lines = [];
   }
 
