@@ -75,11 +75,13 @@ export default class LayerManager {
   }
 
   delegate(method, drawing, ...args) {
-    if (drawing.type === 'lines') return this.brushes.lines[method](drawing, ...args);
-    else if (drawing.type === 'shaky') return this.brushes.shaky[method](drawing, ...args);
-    else if (drawing.type === 'paper') return this.brushes.paper[method](drawing, ...args);
-    else console.error(`LayerManager.delegate: Unknown drawing type ${drawing.type}`);
-    return undefined;
+    const brushType = drawing.style?.brush;
+    const brush = this.brushes[brushType];
+    if (!brush) {
+      console.error(`LayerManager.delegate: Unknown brush type ${brushType}`);
+      return undefined;
+    }
+    return brush[method](drawing, ...args);
   }
 
   setBrush(brush, options) {

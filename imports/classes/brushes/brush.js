@@ -5,10 +5,12 @@ export default class Brush {
       maxSize: 3,
       minSensitivity: 0,
     };
+    this.capturedPoints = [];
+    this.strokeStartTime = 0;
   }
 
   setOptions(options) {
-    _.extend(this.options, options);
+    Object.assign(this.options, options);
   }
 
   sensitivityOverflow(pressure) {
@@ -20,10 +22,39 @@ export default class Brush {
   }
 
   mouseDown(layer) {
-    // console.log('Brush: mouse down');
+    this.capturedPoints = [];
+    this.strokeStartTime = Date.now();
+    this.capturePoint(layer);
   }
 
   mouseUp(layer) {
-    // console.log('Brush: mouse up');
+    // Handled in subclasses for saveDrawings
+  }
+
+  capturePoint(layer) {
+    this.capturedPoints.push({
+      x: layer.trueX,
+      y: layer.trueY,
+      p: layer.pressure / this.options.maxSize,
+      t: Date.now() - this.strokeStartTime,
+    });
+  }
+
+  getStyle(layer) {
+    return {
+      brush: this.type,
+      color: layer.color,
+      size: this.options.maxSize,
+      scale: layer.scale,
+    };
+  }
+
+  toDrawingDocument(layer) {
+    return {
+      points: this.capturedPoints,
+      style: this.getStyle(layer),
+      bookId: layer.bookId,
+      layerIndex: layer.index,
+    };
   }
 }

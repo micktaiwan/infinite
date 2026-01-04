@@ -207,7 +207,9 @@ export default class BoardLayer extends Layer {
       this.startPan(event);
     }
 
-    this.manager.brush.mouseDown(this);
+    if (!this.notDrawingActionInProgress()) {
+      this.manager.brush.mouseDown(this);
+    }
   }
 
   onMouseUp(event) {
@@ -246,19 +248,12 @@ export default class BoardLayer extends Layer {
 
   async stopStraightLine() {
     this.straightLine = false;
-    this.manager.brushes.lines.straitLine(
-      this,
-      {
-        scale: this.scale,
-        pressure: 2,
-        x0: this.toTrueX(this.startX),
-        y0: this.toTrueY(this.startY),
-        x1: this.toTrueX(this.cursorX),
-        y1: this.toTrueY(this.cursorY),
-        color: this.color,
-      },
-    );
-    await this.manager.brushes.lines.saveDrawings(this);
+    const linesBrush = this.manager.brushes.lines;
+    linesBrush.capturedPoints = [
+      { x: this.toTrueX(this.startX), y: this.toTrueY(this.startY), p: 0.66, t: 0 },
+      { x: this.toTrueX(this.cursorX), y: this.toTrueY(this.cursorY), p: 0.66, t: 100 },
+    ];
+    await linesBrush.saveDrawings(this);
     this.redraw();
     this.sel.redraw();
   }
@@ -273,43 +268,20 @@ export default class BoardLayer extends Layer {
 
   async stopRectangle() {
     this.rectangle = false;
-    this.manager.brushes.lines.straitLine(this, {
-      scale: this.scale,
-      pressure: 2,
-      x0: this.toTrueX(this.startX),
-      y0: this.toTrueY(this.startY),
-      x1: this.toTrueX(this.cursorX),
-      y1: this.toTrueY(this.startY),
-      color: this.color,
-    });
-    this.manager.brushes.lines.straitLine(this, {
-      scale: this.scale,
-      pressure: 2,
-      x0: this.toTrueX(this.cursorX),
-      y0: this.toTrueY(this.startY),
-      x1: this.toTrueX(this.cursorX),
-      y1: this.toTrueY(this.cursorY),
-      color: this.color,
-    });
-    this.manager.brushes.lines.straitLine(this, {
-      scale: this.scale,
-      pressure: 2,
-      x0: this.toTrueX(this.cursorX),
-      y0: this.toTrueY(this.cursorY),
-      x1: this.toTrueX(this.startX),
-      y1: this.toTrueY(this.cursorY),
-      color: this.color,
-    });
-    this.manager.brushes.lines.straitLine(this, {
-      scale: this.scale,
-      pressure: 2,
-      x0: this.toTrueX(this.startX),
-      y0: this.toTrueY(this.cursorY),
-      x1: this.toTrueX(this.startX),
-      y1: this.toTrueY(this.startY),
-      color: this.color,
-    });
-    await this.manager.brushes.lines.saveDrawings(this);
+    const linesBrush = this.manager.brushes.lines;
+    const x0 = this.toTrueX(this.startX);
+    const y0 = this.toTrueY(this.startY);
+    const x1 = this.toTrueX(this.cursorX);
+    const y1 = this.toTrueY(this.cursorY);
+
+    linesBrush.capturedPoints = [
+      { x: x0, y: y0, p: 0.66, t: 0 },
+      { x: x1, y: y0, p: 0.66, t: 50 },
+      { x: x1, y: y1, p: 0.66, t: 100 },
+      { x: x0, y: y1, p: 0.66, t: 150 },
+      { x: x0, y: y0, p: 0.66, t: 200 },
+    ];
+    await linesBrush.saveDrawings(this);
     this.sel.redraw();
     this.redraw();
   }

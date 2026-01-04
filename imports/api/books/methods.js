@@ -9,6 +9,21 @@ async function checkBookAccess(bookId, userId) {
   return book;
 }
 
+// Compute bounding box from points
+function computeBounds(points) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 Meteor.methods({
 
   async booksInsert() {
@@ -35,11 +50,18 @@ Meteor.methods({
     );
     let order = lastDrawing?.order || 0;
     order++;
-    await Drawings.insertAsync({
+
+    const doc = {
       ...obj,
       order,
       userId: this.userId,
-    });
+    };
+
+    if (obj.points) {
+      doc.bounds = computeBounds(obj.points);
+    }
+
+    await Drawings.insertAsync(doc);
   },
 
   async undo(bookId, layerIndex) {
@@ -49,13 +71,30 @@ Meteor.methods({
     await Drawings.removeAsync(lastLine._id);
   },
 
-  async updateDrawings(id, lines) {
+  async updateDrawings(id, data) {
     if (!this.userId) throw new Meteor.Error('not-authorized', 'You must be logged in');
     const drawing = await Drawings.findOneAsync(id);
     if (!drawing) throw new Meteor.Error('not-found', 'Drawing not found');
     await checkBookAccess(drawing.bookId, this.userId);
-    if (lines.length === 0) await Drawings.removeAsync(id);
-    else await Drawings.updateAsync(id, { $set: { lines } });
+
+    const $set = {};
+
+    if (data.points !== undefined) {
+      if (data.points.length < 2) {
+        await Drawings.removeAsync(id);
+        return;
+      }
+      $set.points = data.points;
+      $set.bounds = computeBounds(data.points);
+    }
+
+    if (data.style !== undefined) {
+      $set.style = data.style;
+    }
+
+    if (Object.keys($set).length > 0) {
+      await Drawings.updateAsync(id, { $set });
+    }
   },
 
   async updateDrawingsBatch(changes) {
