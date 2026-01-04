@@ -9,6 +9,4 @@ Template.registerHelper('pluralize', (v, name) => {
   else return `${v} ${name}s`;
 });
 
-admin = function (js) {
-  Meteor.callAsync('admin', js).then(res => console.log(res)).catch(err => console.error(err));
-};
+// admin() function removed - eval() security vulnerability
