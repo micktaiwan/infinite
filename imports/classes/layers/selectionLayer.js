@@ -52,6 +52,7 @@ export default class SelectionLayer extends Layer {
     else if (event.key === 'e' && this.selection) this.clearSelection();
     else if (event.key === 'r') this.stopWeight();
     else if (event.key === 'Escape') this.cancelSelection();
+    else if (event.key === 's' && this.selection) this.cancelSelection();
   }
 
   startWeight() {
@@ -137,12 +138,14 @@ export default class SelectionLayer extends Layer {
   clearSelection() {
     this.drawings = [];
     this.selection = undefined;
-    this.selectionOriginLayer.redraw();
+    const originLayer = this.selectionOriginLayer;
+    originLayer.redraw();
     this.selectionOriginLayer = undefined;
     this.reset(false);
     this.redraw();
     Meteor.defer(() => { // without this, setting zIndex does not work
       this.manager.unfocusSelectionLayer();
+      originLayer.redraw();
     });
   }
 
