@@ -68,7 +68,10 @@
     <li class="error">You must be logged to save this book</li>
     {{/unless}}
     <li style="float:right; margin-right:150px">Pressure: {{pressure}}</li>
-    <li style="float:right; margin-right:20px">Objects: {{objectCount}}</li>
+    <li style="float:right; margin-right:20px">Draw: {{drawTime}}ms</li>
+    <li style="float:right; margin-right:20px">Drawn: {{drawnCount}}/{{objectCount}}</li>
+    <li style="float:right; margin-right:20px" class="js-toggle-culling">Culling: {{#if cullingEnabled}}ON{{else}}OFF{{/if}}</li>
+    <li style="float:right; margin-right:20px">Zoom: {{zoom}}</li>
   </ul>
 
   <div id="layers"></div>

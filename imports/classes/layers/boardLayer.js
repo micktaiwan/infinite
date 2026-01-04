@@ -176,6 +176,7 @@ export default class BoardLayer extends Layer {
 
     // drawing
     if (this.leftMouseDown) {
+      const startTime = performance.now();
       // Fallback for browsers without getCoalescedEvents (Safari)
       const events = event.getCoalescedEvents?.() || [event];
       for (let i = 0; i < events.length; i++) {
@@ -187,6 +188,7 @@ export default class BoardLayer extends Layer {
         this.prevCursorX = this.cursorX;
         this.prevCursorY = this.cursorY;
       }
+      Session.set('drawTime', (performance.now() - startTime).toFixed(1));
     }
 
     this.prevCursorX = this.cursorX;
@@ -311,6 +313,7 @@ export default class BoardLayer extends Layer {
   }
 
   stopRectSelection() {
+    if (!this.rectSelection) return;
     this.rectSelection = false;
     if (this.cursorX < this.startX) {
       const temp = this.startX;
@@ -445,22 +448,45 @@ export default class BoardLayer extends Layer {
   }
 
   draw() {
+    const startTime = performance.now();
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (this.hidden) return;
+    if (this.hidden) {
+      Session.set('drawTime', 0);
+      return;
+    }
+
+    const culling = Session.get('cullingEnabled');
+    const vMinX = this.toTrueX(0);
+    const vMaxX = this.toTrueX(this.canvas.clientWidth);
+    const vMinY = this.toTrueY(0);
+    const vMaxY = this.toTrueY(this.canvas.clientHeight);
 
     const cursor = Drawings.find({ bookId: this.bookId, layerIndex: this.index });
     const count = cursor.count();
+    let drawn = 0;
     if (this.prevCount && !count) super.reset(false);
     else {
       cursor.forEach(drawing => {
+        if (culling) {
+          const b = drawing.bounds;
+          if (b && (b.maxX < vMinX || b.minX > vMaxX || b.maxY < vMinY || b.minY > vMaxY)) return;
+        }
+        drawn++;
         this.manager.delegate('drawing', drawing, this);
       });
     }
     this.prevCount = count;
+    Session.set('drawnCount', drawn);
+    Session.set('zoom', this.scale);
+
+    const endTime = performance.now();
+    Session.set('drawTime', (endTime - startTime).toFixed(1));
   }
 
   redraw() {
     if (this.destroyed) return;
     requestAnimationFrame(this.draw.bind(this));
+    if (this.sel.selection) this.sel.redraw();
   }
 }

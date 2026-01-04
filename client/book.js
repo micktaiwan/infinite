@@ -9,6 +9,7 @@ Session.setDefault('menuOpen', null);
 Session.setDefault('activeBrush', 'lines');
 Session.setDefault('activeBrushSize', 3);
 Session.setDefault('activeSensitivity', 0);
+Session.setDefault('cullingEnabled', true);
 
 Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
@@ -37,6 +38,7 @@ Template.book.onRendered(function () {
     if (!Session.get('menuOpen')) return;
     if (!e.target.closest('.menu-item')) {
       Session.set('menuOpen', null);
+      self.manager.focusCurrentLayerCanvas();
     }
   };
   document.addEventListener('click', this.closeMenuHandler);
@@ -68,6 +70,22 @@ Template.book.helpers({
     const bookId = FlowRouter.getParam('bookId');
     return Drawings.find({ bookId }).count();
   },
+  drawTime() {
+    return Session.get('drawTime') || '0';
+  },
+  cullingEnabled() {
+    return Session.get('cullingEnabled');
+  },
+  drawnCount() {
+    return Session.get('drawnCount') || 0;
+  },
+  zoom() {
+    const scale = Session.get('zoom') || 1;
+    const log2 = Math.log2(scale);
+    const rounded = Math.round(log2 * 10) / 10;
+    const sign = rounded >= 0 ? '+' : '';
+    return `${sign}${rounded}`;
+  },
   menuOpen(menuName) {
     return Session.get('menuOpen') === menuName ? 'open' : '';
   },
@@ -96,27 +114,32 @@ Template.book.helpers({
 
 Template.book.events({
   // Menu toggle (vertical menu - click on icon)
-  'click #vmenu .menu-item > .button'(e) {
+  'click #vmenu .menu-item > .button'(e, tpl) {
     e.stopPropagation();
     const menuItem = e.currentTarget.closest('.menu-item');
     const menuName = menuItem.dataset.menu;
     const currentOpen = Session.get('menuOpen');
     Session.set('menuOpen', currentOpen === menuName ? null : menuName);
+    tpl.manager.focusCurrentLayerCanvas();
   },
 
   // Menu toggle (horizontal menu - click on menu item itself)
-  'click #hmenu > .menu-item'(e) {
+  'click #hmenu > .menu-item'(e, tpl) {
     // Don't toggle if clicking on submenu
     if (e.target.closest('.submenu')) return;
     e.stopPropagation();
     const menuName = e.currentTarget.dataset.menu;
     const currentOpen = Session.get('menuOpen');
     Session.set('menuOpen', currentOpen === menuName ? null : menuName);
+    tpl.manager.focusCurrentLayerCanvas();
   },
 
   // Close menu after selecting submenu item
-  'click .submenu li:not(.sep):not(.spacer)'() {
-    Meteor.setTimeout(() => Session.set('menuOpen', null), 150);
+  'click .submenu li:not(.sep):not(.spacer)'(e, tpl) {
+    Meteor.setTimeout(() => {
+      Session.set('menuOpen', null);
+      tpl.manager.focusCurrentLayerCanvas();
+    }, 150);
   },
 
   // Layer events
@@ -137,7 +160,7 @@ Template.book.events({
     tpl.manager.toggleLayer();
   },
   'click .js-remove-layer'(e, tpl) {
-    if (confirm('Are you sure you want to remove the last layer?')) {
+    if (window.confirm('Are you sure you want to remove the last layer?')) {
       Session.set('activeLayer', tpl.manager.removeLayer());
     }
   },
@@ -204,5 +227,9 @@ Template.book.events({
   'click .js-sensitivity-2'(e, tpl) {
     tpl.manager.setBrush(tpl.manager.brush, { minSensitivity: 0.3 });
     Session.set('activeSensitivity', 0.3);
+  },
+  'click .js-toggle-culling'(e, tpl) {
+    Session.set('cullingEnabled', !Session.get('cullingEnabled'));
+    tpl.manager.focusCurrentLayerCanvas();
   },
 });
