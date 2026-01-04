@@ -149,15 +149,14 @@ export default class SelectionLayer extends Layer {
     });
   }
 
-  cancelSelection() {
-    this.copyDrawingsToOriginLayer();
+  async cancelSelection() {
+    await this.copyDrawingsToOriginLayer();
     this.clearSelection();
   }
 
-  copyDrawingsToOriginLayer() {
-    this.drawings.forEach(drawing => {
-      this.manager.delegate('scaleAndSaveDrawing', drawing, this, this.selectionOriginLayer);
-    });
+  async copyDrawingsToOriginLayer() {
+    const savePromises = this.drawings.map(drawing => this.manager.delegate('scaleAndSaveDrawing', drawing, this, this.selectionOriginLayer));
+    await Promise.all(savePromises);
   }
 
   onMouseUp() {

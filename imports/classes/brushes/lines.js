@@ -106,7 +106,7 @@ export default class LinesBrush extends Brush {
     return changed;
   }
 
-  scaleAndSaveDrawing(drawing, from, dest) {
+  async scaleAndSaveDrawing(drawing, from, dest) {
     const transformedPoints = drawing.points.map(p => ({
       x: dest.toTrueX(from.scale * (p.x + from.offsetX)),
       y: dest.toTrueY(from.scale * (p.y + from.offsetY)),
@@ -114,13 +114,24 @@ export default class LinesBrush extends Brush {
       t: p.t,
     }));
 
+    const adjustedStyle = {
+      ...drawing.style,
+      scale: dest.scale * drawing.style.scale / from.scale,
+    };
+
+    const savePromises = [];
     for (let i = 0; i < transformedPoints.length; i += 100) {
       const chunk = transformedPoints.slice(i, Math.min(i + 100, transformedPoints.length));
       if (chunk.length >= 2) {
-        this.capturedPoints = chunk;
-        this.saveDrawings(dest);
+        savePromises.push(this.saveDoc({
+          points: chunk,
+          style: adjustedStyle,
+          bookId: dest.bookId,
+          layerIndex: dest.index,
+        }));
       }
     }
+    await Promise.all(savePromises);
   }
 
   changePressure(drawing, scaleAmount) {

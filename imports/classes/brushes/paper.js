@@ -156,7 +156,7 @@ export default class PaperBrush extends Brush {
     return changed;
   }
 
-  scaleAndSaveDrawing(drawing, from, dest) {
+  async scaleAndSaveDrawing(drawing, from, dest) {
     const transformedPoints = drawing.points.map(p => ({
       x: dest.toTrueX(from.scale * (p.x + from.offsetX)),
       y: dest.toTrueY(from.scale * (p.y + from.offsetY)),
@@ -164,8 +164,17 @@ export default class PaperBrush extends Brush {
       t: p.t,
     }));
 
-    this.capturedPoints = transformedPoints;
-    this.saveDrawings(dest);
+    const adjustedStyle = {
+      ...drawing.style,
+      scale: dest.scale * drawing.style.scale / from.scale,
+    };
+
+    await this.saveDoc({
+      points: transformedPoints,
+      style: adjustedStyle,
+      bookId: dest.bookId,
+      layerIndex: dest.index,
+    });
   }
 
   changePressure(drawing, scaleAmount) {

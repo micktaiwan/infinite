@@ -57,4 +57,10 @@ export default class Brush {
       layerIndex: layer.index,
     };
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  async saveDoc(doc) {
+    if (!Meteor.userId()) return;
+    await Meteor.callAsync('saveDrawings', doc);
+  }
 }
