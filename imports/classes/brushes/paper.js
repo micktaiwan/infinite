@@ -128,11 +128,11 @@ export default class PaperBrush extends Brush {
     return path.segments.map(s => ({ point: { x: s.point.x, y: s.point.y }, in: { x: s.handleIn.x, y: s.handleIn.y }, out: { x: s.handleOut.x, y: s.handleOut.y } }));
   }
 
-  saveDrawings(layer) {
+  async saveDrawings(layer) {
     if (!super.saveDrawings()) return;
     if (!this.path) return;
     this.simplify(0.1);
-    Meteor.callAsync('saveDrawings', this.toDrawing(this.path, layer));
+    await Meteor.callAsync('saveDrawings', this.toDrawing(this.path, layer));
     this.path = undefined;
   }
 
@@ -199,17 +199,14 @@ export default class PaperBrush extends Brush {
     });
   }
 
-  // TODO
   boundingBox(drawing, layer, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity) {
     drawing.lines.forEach(line => {
-      if (layer.toScreenX(line.x0) < minX) minX = layer.toScreenX(line.x0);
-      if (layer.toScreenX(line.x1) < minX) minX = layer.toScreenX(line.x1);
-      if (layer.toScreenY(line.y0) < minY) minY = layer.toScreenY(line.y0);
-      if (layer.toScreenY(line.y1) < minY) minY = layer.toScreenY(line.y1);
-      if (layer.toScreenX(line.x0) > maxX) maxX = layer.toScreenX(line.x0);
-      if (layer.toScreenX(line.x1) > maxX) maxX = layer.toScreenX(line.x1);
-      if (layer.toScreenY(line.y0) > maxY) maxY = layer.toScreenY(line.y0);
-      if (layer.toScreenY(line.y1) > maxY) maxY = layer.toScreenY(line.y1);
+      const screenX = layer.toScreenX(line.point.x);
+      const screenY = layer.toScreenY(line.point.y);
+      if (screenX < minX) minX = screenX;
+      if (screenY < minY) minY = screenY;
+      if (screenX > maxX) maxX = screenX;
+      if (screenY > maxY) maxY = screenY;
     });
     return { minX, minY, maxX, maxY };
   }

@@ -6,14 +6,34 @@ export default class SelectionLayer extends Layer {
     super(manager, manager.bookId);
     this.canvas.id = 'selectionLayer';
 
-    this.canvas.addEventListener('pointerdown', this.onMouseDown.bind(this), { passive: true });
-    this.canvas.addEventListener('pointerup', this.onMouseUp.bind(this), { passive: true });
-    this.canvas.addEventListener('pointerout', this.onMouseUp.bind(this), { passive: true });
-    this.canvas.addEventListener('pointermove', this.onMouseMove.bind(this), { passive: true });
-    this.canvas.addEventListener('keyup', this.onKeyUp.bind(this), { passive: true });
-    this.canvas.addEventListener('keydown', this.onKeyDown.bind(this), { passive: true });
-    this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this), { passive: true });
-    // this.redraw();
+    // Store bound handlers for cleanup
+    this._boundHandlers = {
+      onMouseDown: this.onMouseDown.bind(this),
+      onMouseUp: this.onMouseUp.bind(this),
+      onMouseMove: this.onMouseMove.bind(this),
+      onMouseWheel: this.onMouseWheel.bind(this),
+      onKeyUp: this.onKeyUp.bind(this),
+      onKeyDown: this.onKeyDown.bind(this),
+    };
+
+    this.canvas.addEventListener('pointerdown', this._boundHandlers.onMouseDown, { passive: true });
+    this.canvas.addEventListener('pointerup', this._boundHandlers.onMouseUp, { passive: true });
+    this.canvas.addEventListener('pointerout', this._boundHandlers.onMouseUp, { passive: true });
+    this.canvas.addEventListener('pointermove', this._boundHandlers.onMouseMove, { passive: true });
+    this.canvas.addEventListener('keyup', this._boundHandlers.onKeyUp, { passive: true });
+    this.canvas.addEventListener('keydown', this._boundHandlers.onKeyDown, { passive: true });
+    this.canvas.addEventListener('wheel', this._boundHandlers.onMouseWheel, { passive: true });
+  }
+
+  destroy() {
+    this.canvas.removeEventListener('pointerdown', this._boundHandlers.onMouseDown);
+    this.canvas.removeEventListener('pointerup', this._boundHandlers.onMouseUp);
+    this.canvas.removeEventListener('pointerout', this._boundHandlers.onMouseUp);
+    this.canvas.removeEventListener('pointermove', this._boundHandlers.onMouseMove);
+    this.canvas.removeEventListener('wheel', this._boundHandlers.onMouseWheel);
+    this.canvas.removeEventListener('keyup', this._boundHandlers.onKeyUp);
+    this.canvas.removeEventListener('keydown', this._boundHandlers.onKeyDown);
+    super.destroy();
   }
 
   onKeyDown(event) {
@@ -166,8 +186,10 @@ export default class SelectionLayer extends Layer {
   drawSelectedDrawings() {
     if (!this.selectionOriginLayer) return;
     this.drawings.forEach(drawing => {
+      const originalColor = drawing.color;
       drawing.color = '#f90';
       this.manager.delegate('drawing', drawing, this);
+      drawing.color = originalColor;
     });
   }
 
