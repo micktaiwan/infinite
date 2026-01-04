@@ -19,9 +19,9 @@ export default class PaperBrush extends Brush {
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this, no-unused-vars
   mouseUp(layer) {
-    if (!this.path) return;
-    this.simplify();
+    // Simplification is handled in saveDrawings()
   }
 
   // create a new drawing
@@ -77,39 +77,35 @@ export default class PaperBrush extends Brush {
   }
 
   normalize() {
-    if (!this.path || this.path.segments.length < 2) return 1;
-    let averageDistance = 0;
-    for (let i = 1; i < this.path.segments.length - 1; i++) {
+    if (!this.path || this.path.segments.length < 2) return { factor: 1, center: null };
+    let maxDistance = 0;
+    for (let i = 1; i < this.path.segments.length; i++) {
       const s = this.path.segments[i];
       const prev = this.path.segments[i - 1];
       const dist = Helpers.dist(s.point.x, s.point.y, prev.point.x, prev.point.y);
-      if (dist > averageDistance) averageDistance = dist;
+      if (dist > maxDistance) maxDistance = dist;
     }
-    if (averageDistance < 1 || averageDistance > 25) {
-      const factor = 10 / averageDistance;
-      this.path.scale(factor);
-      return factor;
+    if (maxDistance > 0 && (maxDistance < 1 || maxDistance > 25)) {
+      const factor = 10 / maxDistance;
+      // Store the center point to scale from the same point when unnormalizing
+      const center = this.path.bounds.center.clone();
+      this.path.scale(factor, center);
+      return { factor, center };
     }
-    return 1;
+    return { factor: 1, center: null };
   }
 
-  unnormalize(factor) {
-    this.path.scale(1 / factor);
+  unnormalize(factor, center) {
+    if (center) {
+      this.path.scale(1 / factor, center);
+    }
   }
 
   simplify(x = 2.5) {
     if (!this.path || !this.path.simplify) return;
-    // TODO: normalize before simplifying: find the average distance between points, and if too low, zoom in
-    const factor = this.normalize();
-    const segmentCount = this.path.segments.length;
+    const { factor, center } = this.normalize();
     this.path.simplify(x);
-    this.unnormalize(factor);
-    // this.path.smooth();
-
-    const newSegmentCount = this.path.segments.length;
-    const difference = segmentCount - newSegmentCount;
-    const percentage = 100 - Math.round(newSegmentCount / segmentCount * 100);
-    console.log(`${difference} of the ${segmentCount} segments were removed. Saving ${percentage}%`);
+    this.unnormalize(factor, center);
   }
 
   toDrawing(path, layer) {
@@ -131,9 +127,13 @@ export default class PaperBrush extends Brush {
   async saveDrawings(layer) {
     if (!super.saveDrawings()) return;
     if (!this.path) return;
+    if (this.saving) return; // Prevent duplicate saves
+    this.saving = true;
     this.simplify(0.1);
-    await Meteor.callAsync('saveDrawings', this.toDrawing(this.path, layer));
+    const drawing = this.toDrawing(this.path, layer);
     this.path = undefined;
+    this.saving = false;
+    await Meteor.callAsync('saveDrawings', drawing);
   }
 
   eraseCircle(drawing, x, y, size, changes) {
@@ -144,6 +144,9 @@ export default class PaperBrush extends Brush {
       const line = lines[i];
       if (Helpers.dist(line.point.x, line.point.y, x, y) < size) {
         foundLines.push(line);
+        // Reset handles of adjacent segments to avoid bezier curve loops
+        if (i > 0) lines[i - 1].out = { x: 0, y: 0 };
+        if (i < lines.length - 1) lines[i + 1].in = { x: 0, y: 0 };
         lines.splice(i, 1);
         i--;
         changed = true;
@@ -157,7 +160,6 @@ export default class PaperBrush extends Brush {
     return changed;
   }
 
-  // TODO: too simple, must take into account paths to be slit in half
   eraseRectangle(drawing, x, y, width, height, changes) {
     let changed = false;
     const { lines } = drawing;
@@ -166,6 +168,9 @@ export default class PaperBrush extends Brush {
       const line = lines[i];
       if (line.point.x >= x && line.point.x <= x + width &&
          line.point.y >= y && line.point.y <= y + height) {
+        // Reset handles of adjacent segments to avoid bezier curve loops
+        if (i > 0) lines[i - 1].out = { x: 0, y: 0 };
+        if (i < lines.length - 1) lines[i + 1].in = { x: 0, y: 0 };
         lines.splice(i, 1);
         foundLines.push(line);
         i--;
