@@ -18,3 +18,4 @@ npx eslint .                                                  # Lint
 
 - No defensive/preventive code that silently hides errors (e.g., `if (!x) return;` guards)
 - Let errors surface so they can be debugged properly
+- Always use object destructuring when accessing properties (e.g., `const { color } = dataset` instead of `const color = dataset.color`)
