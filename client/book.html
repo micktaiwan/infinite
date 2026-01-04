@@ -8,49 +8,45 @@
       <button class="{{active index}} js-focus-layer">{{add index 1}}</button>
     </li>
     {{/each}}
-    <li tabindex="3">
+    <li class="menu-item {{menuOpen 'brushes'}}" data-menu="brushes">
       <i class="fas fa-brush button" title="Brushes"></i>
-      <ul>
-        <li class="js-brush-1"><i class="fas fa-paint-brush"></i> Brush 2</li>
-        <li class="js-brush-2"><i class="fas fa-paint-brush"></i> Brush 3</li>
-        <li class="js-brush-3"><i class="fas fa-paint-brush"></i> Brush 15</li>
-        <li class="js-brush-4"><i class="fas fa-paint-brush"></i> Brush 100</li>
+      <span class="active-indicator">{{activeBrushLabel}}</span>
+      <ul class="submenu">
+        <li class="js-brush-1 {{activeBrushClass 'lines' 2}}"><i class="fas fa-paint-brush"></i> Brush 2</li>
+        <li class="js-brush-2 {{activeBrushClass 'lines' 3}}"><i class="fas fa-paint-brush"></i> Brush 3</li>
+        <li class="js-brush-3 {{activeBrushClass 'lines' 15}}"><i class="fas fa-paint-brush"></i> Brush 15</li>
+        <li class="js-brush-4 {{activeBrushClass 'lines' 100}}"><i class="fas fa-paint-brush"></i> Brush 100</li>
         <li class="sep"></li>
-        <li class="js-ballpoint-1"><i class="fas fa-pen"></i> Ball Point 1</li>
-        <li class="js-ballpoint-2"><i class="fas fa-pen"></i> Ball Point 3</li>
-        <li class="js-ballpoint-3"><i class="fas fa-pen"></i> Ball Point 10</li>
+        <li class="js-ballpoint-1 {{activeBrushClass 'paper' 1}}"><i class="fas fa-pen"></i> Ball Point 1</li>
+        <li class="js-ballpoint-2 {{activeBrushClass 'paper' 3}}"><i class="fas fa-pen"></i> Ball Point 3</li>
+        <li class="js-ballpoint-3 {{activeBrushClass 'paper' 10}}"><i class="fas fa-pen"></i> Ball Point 10</li>
         <li class="sep"></li>
-        <li class="js-shaky-1"><i class="fas fa-pen"></i> Shaky 3</li>
-        <li class="js-shaky-2"><i class="fas fa-pen"></i> Shaky 10</li>
+        <li class="js-shaky-1 {{activeBrushClass 'shaky' 3}}"><i class="fas fa-pen"></i> Shaky 3</li>
+        <li class="js-shaky-2 {{activeBrushClass 'shaky' 10}}"><i class="fas fa-pen"></i> Shaky 10</li>
       </ul>
     </li>
-    <li tabindex="4">
+    <li class="menu-item {{menuOpen 'sensitivity'}}" data-menu="sensitivity">
       <i class="fas fa-hammer button" title="Sensitivity"></i>
-      <ul>
-        <li class="js-sensitivity-0">
-          <i class="fas fa-hammer"></i> Sensitivity 0
-        </li>
-        <li class="js-sensitivity-1">
-          <i class="fas fa-hammer"></i> Sensitivity 1
-        </li>
-        <li class="js-sensitivity-2">
-          <i class="fas fa-hammer"></i> Sensitivity 2
-        </li>
+      <span class="active-indicator">{{activeSensitivityLabel}}</span>
+      <ul class="submenu">
+        <li class="js-sensitivity-0 {{activeSensitivityClass 0}}"><i class="fas fa-hammer"></i> Sensitivity 0</li>
+        <li class="js-sensitivity-1 {{activeSensitivityClass 0.15}}"><i class="fas fa-hammer"></i> Sensitivity 1</li>
+        <li class="js-sensitivity-2 {{activeSensitivityClass 0.3}}"><i class="fas fa-hammer"></i> Sensitivity 2</li>
       </ul>
     </li>
   </ul>
 
   <ul id="hmenu">
-    <li tabindex="1">
+    <li class="menu-item {{menuOpen 'layers'}}" data-menu="layers">
       Layers
-      <ul>
-        <li class="js-toggle-layer">Toggle layer <span>⬆T</span></li>
+      <ul class="submenu">
+        <li class="js-toggle-layer">Toggle layer <span>Shift+T</span></li>
         <li class="js-remove-layer">Remove last layer</li>
       </ul>
     </li>
-    <li tabindex="2">
+    <li class="menu-item {{menuOpen 'help'}}" data-menu="help">
       Help
-      <ul class="highlight">
+      <ul class="submenu highlight">
         <li>This menu is not actionable, just some reminders</li>
         <li class="spacer"></li>
         <li>Undo <span>Ctrl-Z</span></li>

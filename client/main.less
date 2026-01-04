@@ -28,6 +28,17 @@ a {
   }
 }
 
+// Color variables - Modern dark theme
+@menu-bg: #2d2d2d;
+@menu-bg-hover: #3a3a3a;
+@accent: #4a9eff;
+@accent-hover: #3d8ae8;
+@text-primary: #ffffff;
+@text-secondary: rgba(255, 255, 255, 0.7);
+@submenu-bg: #383838;
+@submenu-shadow: rgba(0, 0, 0, 0.3);
+@border-radius: 8px;
+
 #vmenu {
   user-select: none;
   z-index: 200;
@@ -36,75 +47,148 @@ a {
   padding: 0;
   width: 50px;
   height: 100%;
-  background: #686868;
+  background: @menu-bg;
   position: absolute;
 
-  li {
-    // border: 1px solid #000;
+  > li {
     display: block;
     position: relative;
     margin: 0;
     padding: 5px;
     white-space: nowrap;
+
+    // Menu item button (icon)
     i.button {
       cursor: pointer;
       margin: 0;
       padding: 8px 14px;
-      border-radius: 5px;
+      border-radius: @border-radius;
       width: 12px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.9);
+      color: @menu-bg;
+      transition: background-color 0.2s ease, transform 0.1s ease, color 0.2s ease;
+
+      &:hover {
+        background: @text-primary;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
-    &:focus {
-      ul {
-        display: block;
-        li {
-          display: block;
+
+    // Active indicator badge
+    .active-indicator {
+      display: block;
+      font-size: 8px;
+      color: @text-secondary;
+      text-align: center;
+      margin-top: 2px;
+      letter-spacing: -0.3px;
+    }
+
+    // Submenu with animation
+    ul.submenu {
+      position: absolute;
+      top: 0;
+      left: 51px;
+      list-style: none;
+      margin: 0;
+      padding: 4px 0;
+      border-radius: @border-radius;
+      background: @submenu-bg;
+      box-shadow: 0 8px 24px @submenu-shadow;
+      min-width: 150px;
+
+      // Animation - hidden state
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+
+      li {
+        cursor: pointer;
+        margin: 0;
+        padding: 10px 14px;
+        color: @text-primary;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background-color 0.15s ease;
+
+        &:first-child {
+          border-radius: @border-radius @border-radius 0 0;
+        }
+
+        &:last-child {
+          border-radius: 0 0 @border-radius @border-radius;
+        }
+
+        &:hover {
+          background: @menu-bg-hover;
+        }
+
+        &.active {
+          background: @accent;
+          color: @text-primary;
+
+          i { color: @text-primary; }
+        }
+
+        &.sep {
+          padding: 0;
+          margin: 4px 10px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          cursor: default;
+
+          &:hover { background: transparent; }
+        }
+
+        i {
+          width: 16px;
+          text-align: center;
+          color: @text-secondary;
         }
       }
     }
-    ul {
-      position: absolute;
-      top: 5px;
-      list-style: none;
-      margin-left: 51px;
-      padding: 0;
-      display: none;
-      border-radius: 5px;
-      // border:#000 solid 1px;
-      background: #fff;
-      li {
-        cursor: pointer;
-        min-width: 100px;
-        margin: 0;
-        padding: 10px;
-        &:hover {
-          background: #eee;
-        }
-        &.sep {
-          padding: 0;
-          border-top: 1px solid #000;
-        }
+
+    // Open state
+    &.menu-item.open {
+      > i.button {
+        background: @accent;
+        color: @text-primary;
+      }
+
+      ul.submenu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
       }
     }
   }
 
   button {
     width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
 
     &.active {
-      background: rgb(93, 146, 100);
-      color: #fff;
+      background: @accent;
+      color: @text-primary;
     }
+
     &.hidden {
-      background: #686868;
+      background: @menu-bg;
+      color: @text-secondary;
     }
   }
 }
 
 #hmenu {
   user-select: none;
-  background: #686868;
-  color: #fff;
+  background: @menu-bg;
+  color: @text-primary;
   z-index: 200;
   position: absolute;
   list-style: none;
@@ -112,54 +196,91 @@ a {
   padding: 0;
   width: calc(100% - 50px);
 
-  ul.highlight > li.spacer {
-    height: 10px;
-  }
-
-  ul.highlight > li:not(.spacer) {
-    &:hover {
-      background: rgb(93, 146, 100);
-      color: #fff;
-    }
-  }
-  li {
+  > li {
     cursor: pointer;
     float: left;
     margin: 0;
-    padding: 5px;
-    &:focus {
-      background: rgb(93, 146, 100);
-      color: #fff;
-      > ul {
+    padding: 8px 12px;
+    transition: background-color 0.15s ease;
+
+    &.menu-item:hover,
+    &.menu-item.open {
+      background: @accent;
+    }
+
+    // Keyboard shortcut badges
+    span {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      font-size: 0.75em;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.3);
+      float: right;
+      margin-left: 20px;
+    }
+
+    // Submenu with animation
+    ul.submenu {
+      position: absolute;
+      top: 100%;
+      left: auto;
+      background: @submenu-bg;
+      list-style: none;
+      margin: 0;
+      padding: 4px 0;
+      min-width: 220px;
+      border-radius: 0 0 @border-radius @border-radius;
+      box-shadow: 0 8px 24px @submenu-shadow;
+
+      // Animation - hidden state
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+
+      > li {
+        float: none;
         display: block;
-        > li {
-          float: none;
-          display: block;
+        padding: 10px 14px;
+        color: @text-primary;
+        transition: background-color 0.15s ease;
+
+        &:hover {
+          background: @menu-bg-hover;
+        }
+
+        &:last-child {
+          border-radius: 0 0 @border-radius @border-radius;
+        }
+
+        &.spacer {
+          height: 8px;
+          padding: 0;
+          cursor: default;
+          &:hover { background: transparent; }
+        }
+      }
+
+      // Help menu highlight style
+      &.highlight > li:not(.spacer) {
+        &:hover {
+          background: @accent;
         }
       }
     }
-    span {
-      border: 1px solid #fff;
-      border-radius: 5px;
-      font-size: 0.8em;
-      padding: 0 5px;
-      background: #333;
-      float: right;
-      margin-left: 25px;
+
+    // Open state
+    &.menu-item.open ul.submenu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
-    ul {
-      position: absolute;
-      background: #686868;
-      display: none;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
+
     &.error {
-      background: #f33;
-      color: #fff;
+      background: #e74c3c;
+      color: @text-primary;
       a {
-        color: #33f;
+        color: #74b9ff;
         text-decoration: underline;
       }
     }
