@@ -31,6 +31,7 @@ export default class LayerManager {
       paper: new PaperBrush(),
     };
     this.brush = this.brushes.lines;
+    this.color = '#000000';
 
     // Store autorun handles for cleanup
     this._autorunHandles = [];
@@ -56,7 +57,9 @@ export default class LayerManager {
     this.observeHandle = Layers.find({ bookId: this.bookId }).observeChanges({
       added: (_id, fields) => {
         self.dimOpacityForAllLayers();
-        self.layers.push(new BoardLayer(self, _id, fields));
+        const layer = new BoardLayer(self, _id, fields);
+        layer.color = self.color;
+        self.layers.push(layer);
         if (!self.initializing) self.focus(fields.index);
       },
       removed: _id => {
@@ -90,11 +93,20 @@ export default class LayerManager {
     this.savePrefs();
   }
 
+  setColor(color) {
+    this.color = color;
+    this.layers.forEach(layer => {
+      layer.color = color;
+    });
+    this.savePrefs();
+  }
+
   savePrefs() {
     if (!this.userId) return;
     const prefs = {
       brush: this.brush.type,
       brushOptions: this.brush.options,
+      color: this.color,
     };
     Meteor.callAsync('savePrefs', prefs);
   }
@@ -110,6 +122,10 @@ export default class LayerManager {
       const { prefs } = user.profile;
       const brush = this.brushForType(prefs.brush);
       if (brush) this.setBrush(brush, prefs.brushOptions);
+      if (prefs.color) {
+        this.setColor(prefs.color);
+        Session.set('activeColor', prefs.color);
+      }
     });
   }
 

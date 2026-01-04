@@ -9,6 +9,7 @@ Session.setDefault('menuOpen', null);
 Session.setDefault('activeBrush', 'lines');
 Session.setDefault('activeBrushSize', 3);
 Session.setDefault('activeSensitivity', 0);
+Session.setDefault('activeColor', '#000000');
 Session.setDefault('cullingEnabled', true);
 
 Template.book.onRendered(function () {
@@ -109,6 +110,12 @@ Template.book.helpers({
   },
   activeSensitivityClass(value) {
     return Session.get('activeSensitivity') === value ? 'active' : '';
+  },
+  activeColor() {
+    return Session.get('activeColor');
+  },
+  activeColorClass(color) {
+    return Session.get('activeColor') === color ? 'active' : '';
   },
 });
 
@@ -228,6 +235,19 @@ Template.book.events({
     tpl.manager.setBrush(tpl.manager.brush, { minSensitivity: 0.3 });
     Session.set('activeSensitivity', 0.3);
   },
+
+  // Color events
+  'click .js-color'(e, tpl) {
+    const { color } = e.currentTarget.dataset;
+    Session.set('activeColor', color);
+    tpl.manager.setColor(color);
+  },
+  'input .js-color-picker'(e, tpl) {
+    const color = e.currentTarget.value;
+    Session.set('activeColor', color);
+    tpl.manager.setColor(color);
+  },
+
   'click .js-toggle-culling'(e, tpl) {
     Session.set('cullingEnabled', !Session.get('cullingEnabled'));
     tpl.manager.focusCurrentLayerCanvas();

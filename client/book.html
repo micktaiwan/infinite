@@ -34,6 +34,25 @@
         <li class="js-sensitivity-2 {{activeSensitivityClass 0.3}}"><i class="fas fa-hammer"></i> Sensitivity 2</li>
       </ul>
     </li>
+    <li class="menu-item {{menuOpen 'colors'}}" data-menu="colors">
+      <i class="fas fa-palette button" title="Colors"></i>
+      <span class="active-indicator color-indicator" style="background-color: {{activeColor}}"></span>
+      <ul class="submenu color-submenu">
+        <li class="js-color {{activeColorClass '#000000'}}" data-color="#000000"><span class="color-swatch" style="background:#000000"></span> Black</li>
+        <li class="js-color {{activeColorClass '#e74c3c'}}" data-color="#e74c3c"><span class="color-swatch" style="background:#e74c3c"></span> Red</li>
+        <li class="js-color {{activeColorClass '#3498db'}}" data-color="#3498db"><span class="color-swatch" style="background:#3498db"></span> Blue</li>
+        <li class="js-color {{activeColorClass '#27ae60'}}" data-color="#27ae60"><span class="color-swatch" style="background:#27ae60"></span> Green</li>
+        <li class="js-color {{activeColorClass '#f39c12'}}" data-color="#f39c12"><span class="color-swatch" style="background:#f39c12"></span> Orange</li>
+        <li class="js-color {{activeColorClass '#9b59b6'}}" data-color="#9b59b6"><span class="color-swatch" style="background:#9b59b6"></span> Purple</li>
+        <li class="js-color {{activeColorClass '#1abc9c'}}" data-color="#1abc9c"><span class="color-swatch" style="background:#1abc9c"></span> Teal</li>
+        <li class="js-color {{activeColorClass '#34495e'}}" data-color="#34495e"><span class="color-swatch" style="background:#34495e"></span> Dark Gray</li>
+        <li class="sep"></li>
+        <li class="color-picker-item">
+          <input type="color" class="js-color-picker" value="{{activeColor}}" title="Custom color">
+          <span>Custom</span>
+        </li>
+      </ul>
+    </li>
   </ul>
 
   <ul id="hmenu">
