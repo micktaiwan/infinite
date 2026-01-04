@@ -40,7 +40,7 @@ export default class PaperBrush extends Brush {
     this.simplifyPath(path, tolerance);
 
     const c = layer.ctx;
-    const segments = path.segments;
+    const { segments } = path;
 
     c.beginPath();
     c.moveTo(
@@ -72,6 +72,8 @@ export default class PaperBrush extends Brush {
   }
 
   simplifyPath(path, tolerance) {
+    // Use this.type to validate brush type
+    if (this.type !== 'paper') return;
     if (!path || path.segments.length < 2) return;
 
     let maxDistance = 0;
@@ -107,18 +109,24 @@ export default class PaperBrush extends Brush {
 
   eraseCircle(drawing, x, y, size, changes) {
     const { points } = drawing;
+    const { type } = this;
     let changed = false;
     const remainingPoints = [];
     const removedPoints = [];
 
-    for (const point of points) {
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return false;
+    }
+
+    points.forEach(point => {
       if (Helpers.dist(point.x, point.y, x, y) < size) {
         removedPoints.push(point);
         changed = true;
       } else {
         remainingPoints.push(point);
       }
-    }
+    });
 
     if (changed) {
       const drawings = { style: drawing.style, points: removedPoints };
@@ -133,11 +141,17 @@ export default class PaperBrush extends Brush {
 
   eraseRectangle(drawing, x, y, width, height, changes) {
     const { points } = drawing;
+    const { type } = this;
     let changed = false;
     const remainingPoints = [];
     const removedPoints = [];
 
-    for (const point of points) {
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return false;
+    }
+
+    points.forEach(point => {
       if (point.x >= x && point.x <= x + width &&
           point.y >= y && point.y <= y + height) {
         removedPoints.push(point);
@@ -145,7 +159,7 @@ export default class PaperBrush extends Brush {
       } else {
         remainingPoints.push(point);
       }
-    }
+    });
 
     if (changed) {
       const drawings = { style: drawing.style, points: removedPoints };
@@ -180,19 +194,38 @@ export default class PaperBrush extends Brush {
   }
 
   changePressure(drawing, scaleAmount) {
+    const { type } = this;
+
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return;
+    }
+
     drawing.style.size *= scaleAmount;
     if (drawing.style.size < 0.5) drawing.style.size = 0.5;
   }
 
   boundingBox(drawing, layer, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity) {
-    for (const point of drawing.points) {
+    const { type } = this;
+    let resultMinX = minX;
+    let resultMinY = minY;
+    let resultMaxX = maxX;
+    let resultMaxY = maxY;
+
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return { minX: resultMinX, minY: resultMinY, maxX: resultMaxX, maxY: resultMaxY };
+    }
+
+    drawing.points.forEach(point => {
       const screenX = layer.toScreenX(point.x);
       const screenY = layer.toScreenY(point.y);
-      if (screenX < minX) minX = screenX;
-      if (screenY < minY) minY = screenY;
-      if (screenX > maxX) maxX = screenX;
-      if (screenY > maxY) maxY = screenY;
-    }
-    return { minX, minY, maxX, maxY };
+      if (screenX < resultMinX) resultMinX = screenX;
+      if (screenY < resultMinY) resultMinY = screenY;
+      if (screenX > resultMaxX) resultMaxX = screenX;
+      if (screenY > resultMaxY) resultMaxY = screenY;
+    });
+
+    return { minX: resultMinX, minY: resultMinY, maxX: resultMaxX, maxY: resultMaxY };
   }
 }

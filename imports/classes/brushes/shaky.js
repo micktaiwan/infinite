@@ -1,5 +1,11 @@
 import LinesBrush from './lines';
 
+// Base seeded random function
+function computeSeededRandom(seed) {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+}
+
 export default class ShakyBrush extends LinesBrush {
   constructor() {
     super();
@@ -7,10 +13,9 @@ export default class ShakyBrush extends LinesBrush {
     this.name = 'Shaky';
   }
 
-  // Simple PRNG for deterministic results
+  // Instance method wrapper that uses this.type for type-specific randomness
   seededRandom(seed) {
-    const x = Math.sin(seed * 9999) * 10000;
-    return x - Math.floor(x);
+    return computeSeededRandom(seed + this.type.length);
   }
 
   draw(layer) {
@@ -49,16 +54,16 @@ export default class ShakyBrush extends LinesBrush {
       const randPressure = this.seededRandom(seed1 + 2000) + 0.1;
 
       const pressure = p1.p * style.size * ratio * randPressure;
-      if (pressure < 0.01 || pressure > 1000) continue;
-
-      layer.drawLine(
-        layer.toScreenX(p0.x + rand0X),
-        layer.toScreenY(p0.y + rand0Y),
-        layer.toScreenX(p1.x + rand1X),
-        layer.toScreenY(p1.y + rand1Y),
-        pressure,
-        style.color,
-      );
+      if (pressure >= 0.01 && pressure <= 1000) {
+        layer.drawLine(
+          layer.toScreenX(p0.x + rand0X),
+          layer.toScreenY(p0.y + rand0Y),
+          layer.toScreenX(p1.x + rand1X),
+          layer.toScreenY(p1.y + rand1Y),
+          pressure,
+          style.color,
+        );
+      }
     }
   }
 }

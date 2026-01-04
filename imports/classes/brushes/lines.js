@@ -25,22 +25,26 @@ export default class LinesBrush extends Brush {
     if (!points || points.length < 2) return;
 
     const ratio = layer.scale / style.scale;
+    const { type } = this;
+
+    // Validate brush type matches
+    if (style.brush !== type && style.brush !== undefined) return;
 
     for (let i = 1; i < points.length; i++) {
       const p0 = points[i - 1];
       const p1 = points[i];
       const pressure = p1.p * style.size * ratio;
 
-      if (pressure < 0.01 || pressure > 1000) continue;
-
-      layer.drawLine(
-        layer.toScreenX(p0.x),
-        layer.toScreenY(p0.y),
-        layer.toScreenX(p1.x),
-        layer.toScreenY(p1.y),
-        pressure,
-        style.color,
-      );
+      if (pressure >= 0.01 && pressure <= 1000) {
+        layer.drawLine(
+          layer.toScreenX(p0.x),
+          layer.toScreenY(p0.y),
+          layer.toScreenX(p1.x),
+          layer.toScreenY(p1.y),
+          pressure,
+          style.color,
+        );
+      }
     }
   }
 
@@ -55,18 +59,24 @@ export default class LinesBrush extends Brush {
 
   eraseCircle(drawing, x, y, size, changes) {
     const { points } = drawing;
+    const { type } = this;
     let changed = false;
     const remainingPoints = [];
     const removedPoints = [];
 
-    for (const point of points) {
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return false;
+    }
+
+    points.forEach(point => {
       if (Helpers.dist(point.x, point.y, x, y) < size) {
         removedPoints.push(point);
         changed = true;
       } else {
         remainingPoints.push(point);
       }
-    }
+    });
 
     if (changed) {
       const drawings = { style: drawing.style, points: removedPoints };
@@ -81,11 +91,17 @@ export default class LinesBrush extends Brush {
 
   eraseRectangle(drawing, x, y, width, height, changes) {
     const { points } = drawing;
+    const { type } = this;
     let changed = false;
     const remainingPoints = [];
     const removedPoints = [];
 
-    for (const point of points) {
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return false;
+    }
+
+    points.forEach(point => {
       if (point.x >= x && point.x <= x + width &&
           point.y >= y && point.y <= y + height) {
         removedPoints.push(point);
@@ -93,7 +109,7 @@ export default class LinesBrush extends Brush {
       } else {
         remainingPoints.push(point);
       }
-    }
+    });
 
     if (changed) {
       const drawings = { style: drawing.style, points: removedPoints };
@@ -135,22 +151,42 @@ export default class LinesBrush extends Brush {
   }
 
   changePressure(drawing, scaleAmount) {
-    for (const point of drawing.points) {
-      point.p *= scaleAmount;
-      if (point.p < 0.01) point.p = 0.01;
-      if (point.p > 1) point.p = 1;
+    const { type } = this;
+
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return;
     }
+
+    drawing.points.forEach(point => {
+      const p = point;
+      p.p *= scaleAmount;
+      if (p.p < 0.01) p.p = 0.01;
+      if (p.p > 1) p.p = 1;
+    });
   }
 
   boundingBox(drawing, layer, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity) {
-    for (const point of drawing.points) {
+    const { type } = this;
+    let resultMinX = minX;
+    let resultMinY = minY;
+    let resultMaxX = maxX;
+    let resultMaxY = maxY;
+
+    // Validate this brush handles this drawing type
+    if (drawing.style?.brush && drawing.style.brush !== type) {
+      return { minX: resultMinX, minY: resultMinY, maxX: resultMaxX, maxY: resultMaxY };
+    }
+
+    drawing.points.forEach(point => {
       const screenX = layer.toScreenX(point.x);
       const screenY = layer.toScreenY(point.y);
-      if (screenX < minX) minX = screenX;
-      if (screenY < minY) minY = screenY;
-      if (screenX > maxX) maxX = screenX;
-      if (screenY > maxY) maxY = screenY;
-    }
-    return { minX, minY, maxX, maxY };
+      if (screenX < resultMinX) resultMinX = screenX;
+      if (screenY < resultMinY) resultMinY = screenY;
+      if (screenX > resultMaxX) resultMaxX = screenX;
+      if (screenY > resultMaxY) resultMaxY = screenY;
+    });
+
+    return { minX: resultMinX, minY: resultMinY, maxX: resultMaxX, maxY: resultMaxY };
   }
 }

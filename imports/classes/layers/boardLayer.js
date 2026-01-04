@@ -41,11 +41,11 @@ export default class BoardLayer extends Layer {
       added: (id, drawing) => {
         if (!self.manager.userId || drawing.userId !== self.manager.userId) self.redraw();
       },
-      changed: (id, doc) => {
+      changed: id => {
         const drawing = Drawings.findOne(id);
         if (drawing.userId !== self.manager.userId && !self.notDrawingActionInProgress()) self.redraw();
       },
-      removed: id => {
+      removed: () => {
         if (!self.notDrawingActionInProgress()) self.redraw();
       },
     });

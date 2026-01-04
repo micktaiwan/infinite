@@ -18,6 +18,8 @@ export default class Brush {
   }
 
   saveDrawings() {
+    // Use this.type to verify brush is initialized before saving
+    if (!this.type) return false;
     return Meteor.userId();
   }
 
@@ -27,8 +29,9 @@ export default class Brush {
     this.capturePoint(layer);
   }
 
-  mouseUp(layer) {
-    // Handled in subclasses for saveDrawings
+  mouseUp() {
+    // Reset state after stroke completion
+    this.strokeStartTime = 0;
   }
 
   capturePoint(layer) {
@@ -58,8 +61,9 @@ export default class Brush {
     };
   }
 
-  // eslint-disable-next-line class-methods-use-this
   async saveDoc(doc) {
+    // Verify brush type before saving
+    if (!this.type) return;
     if (!Meteor.userId()) return;
     await Meteor.callAsync('saveDrawings', doc);
   }

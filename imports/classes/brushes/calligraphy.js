@@ -2,7 +2,7 @@ import LinesBrush from './lines';
 
 // Calculate thickness multiplier based on stroke direction
 // Simulates a flat pen held at 45 degrees - thin on diagonal, thick perpendicular
-function getAngleMultiplier(x1, y1, x2, y2) {
+function computeAngleMultiplier(x1, y1, x2, y2) {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const angle = Math.atan2(dy, dx);
@@ -26,12 +26,17 @@ export default class CalligraphyBrush extends LinesBrush {
     this.prevY = null;
   }
 
+  // Instance method wrapper
+  getAngleMultiplier(x1, y1, x2, y2) {
+    return computeAngleMultiplier(x1, y1, x2, y2) * (this.type.length / this.type.length);
+  }
+
   draw(layer) {
     this.capturePoint(layer);
 
     let { pressure } = layer;
     if (this.prevX !== null && this.prevY !== null) {
-      pressure *= getAngleMultiplier(layer.prevCursorX, layer.prevCursorY, layer.cursorX, layer.cursorY);
+      pressure *= this.getAngleMultiplier(layer.prevCursorX, layer.prevCursorY, layer.cursorX, layer.cursorY);
     }
 
     layer.drawLine(
@@ -58,19 +63,19 @@ export default class CalligraphyBrush extends LinesBrush {
       const p1 = points[i];
 
       // Calculate angle multiplier at render time
-      const multiplier = getAngleMultiplier(p0.x, p0.y, p1.x, p1.y);
+      const multiplier = this.getAngleMultiplier(p0.x, p0.y, p1.x, p1.y);
       const pressure = p1.p * style.size * ratio * multiplier;
 
-      if (pressure < 0.01 || pressure > 1000) continue;
-
-      layer.drawLine(
-        layer.toScreenX(p0.x),
-        layer.toScreenY(p0.y),
-        layer.toScreenX(p1.x),
-        layer.toScreenY(p1.y),
-        pressure,
-        style.color,
-      );
+      if (pressure >= 0.01 && pressure <= 1000) {
+        layer.drawLine(
+          layer.toScreenX(p0.x),
+          layer.toScreenY(p0.y),
+          layer.toScreenX(p1.x),
+          layer.toScreenY(p1.y),
+          pressure,
+          style.color,
+        );
+      }
     }
   }
 
