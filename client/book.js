@@ -1,6 +1,6 @@
 import { FlowRouter } from 'meteor/ostrio:flow-router-extra';
 import LayerManager from '../imports/classes/layers/layerManager';
-import { Layers } from '../imports/api/books/collections';
+import { Drawings, Layers } from '../imports/api/books/collections';
 
 import './book.html';
 
@@ -12,6 +12,7 @@ Session.setDefault('activeSensitivity', 0);
 
 Template.book.onRendered(function () {
   const bookId = FlowRouter.getParam('bookId');
+  this.subscribe('books');
   this.autorun(() => {
     if (!Meteor.userId()) return;
     Meteor.callAsync('booksAddUser', bookId);
@@ -58,6 +59,10 @@ Template.book.helpers({
     const type = Session.get('pointerType') || '?';
     const pressure = Session.get('pressure')?.toFixed(2) || '0.00';
     return `${pressure} (${type})`;
+  },
+  objectCount() {
+    const bookId = FlowRouter.getParam('bookId');
+    return Drawings.find({ bookId }).count();
   },
   menuOpen(menuName) {
     return Session.get('menuOpen') === menuName ? 'open' : '';
