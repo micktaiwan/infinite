@@ -5,6 +5,7 @@ import ShakyBrush from '../brushes/shaky';
 import PaperBrush from '../brushes/paper';
 import CalligraphyBrush from '../brushes/calligraphy';
 import NebulaBrush from '../brushes/nebula';
+import WatercolorBrush from '../brushes/watercolor';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../../api/books/collections';
@@ -33,6 +34,7 @@ export default class LayerManager {
       paper: new PaperBrush(),
       calligraphy: new CalligraphyBrush(),
       nebula: new NebulaBrush(),
+      watercolor: new WatercolorBrush(),
     };
     this.brush = this.brushes.lines;
     this.color = '#000000';
@@ -145,6 +147,8 @@ export default class LayerManager {
         return this.brushes.calligraphy;
       case 'nebula':
         return this.brushes.nebula;
+      case 'watercolor':
+        return this.brushes.watercolor;
       default:
         console.error(`Unknown brush type: ${type}`);
         return undefined;

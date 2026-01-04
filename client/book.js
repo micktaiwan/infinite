@@ -93,7 +93,7 @@ Template.book.helpers({
   activeBrushLabel() {
     const type = Session.get('activeBrush');
     const size = Session.get('activeBrushSize');
-    const labels = { lines: 'Brush', paper: 'Pen', shaky: 'Shaky', calligraphy: 'Calligraphy' };
+    const labels = { lines: 'Brush', paper: 'Pen', shaky: 'Shaky', calligraphy: 'Calligraphy', nebula: 'Nebula', watercolor: 'Watercolor' };
     return `${labels[type] || 'Brush'} ${size}`;
   },
   activeBrushClass(brushType, size) {
@@ -260,6 +260,27 @@ Template.book.events({
     Session.set('activeBrush', 'nebula');
     Session.set('activeBrushSize', 30);
   },
+  'click .js-watercolor-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'watercolor', brushSize: 10 });
+    tpl.manager.setBrush(tpl.manager.brushes.watercolor, { maxSize: 10 });
+    Session.set('activeBrush', 'watercolor');
+    Session.set('activeBrushSize', 10);
+  },
+  'click .js-watercolor-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'watercolor', brushSize: 25 });
+    tpl.manager.setBrush(tpl.manager.brushes.watercolor, { maxSize: 25 });
+    Session.set('activeBrush', 'watercolor');
+    Session.set('activeBrushSize', 25);
+  },
+  'click .js-watercolor-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'watercolor', brushSize: 50 });
+    tpl.manager.setBrush(tpl.manager.brushes.watercolor, { maxSize: 50 });
+    Session.set('activeBrush', 'watercolor');
+    Session.set('activeBrushSize', 50);
+  },
   'click .js-ballpoint-1'(e, tpl) {
     const sel = tpl.manager.selectionLayer;
     if (sel?.hasSelection()) sel.applyStyle({ brush: 'paper', brushSize: 1 });
@@ -376,6 +397,18 @@ Template.book.events({
     else if (classList.includes('js-nebula-3')) brushSize = 30;
 
     sel.previewStyle({ brush: 'nebula', brushSize });
+  },
+  'mouseenter .js-watercolor-1, mouseenter .js-watercolor-2, mouseenter .js-watercolor-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-watercolor-1')) brushSize = 10;
+    else if (classList.includes('js-watercolor-2')) brushSize = 25;
+    else if (classList.includes('js-watercolor-3')) brushSize = 50;
+
+    sel.previewStyle({ brush: 'watercolor', brushSize });
   },
   'mouseenter .js-color'(e, tpl) {
     const sel = tpl.manager.selectionLayer;
