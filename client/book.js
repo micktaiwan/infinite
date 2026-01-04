@@ -20,7 +20,11 @@ Template.book.onRendered(function () {
   this.manager = new LayerManager(bookId);
   const self = this;
   this.subscribe('layers', bookId, () => {
-    Session.set('activeLayer', Layers.find({ bookId }).count() - 1);
+    const layerCount = Layers.find({ bookId }).count();
+    if (layerCount === 0) {
+      self.manager.addLayer();
+    }
+    Session.set('activeLayer', Math.max(0, layerCount - 1));
     Meteor.defer(() => {
       self.subscribe('lines', bookId, () => {
         self.manager.redraw();
