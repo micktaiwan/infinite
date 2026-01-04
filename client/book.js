@@ -239,6 +239,27 @@ Template.book.events({
     Session.set('activeBrush', 'calligraphy');
     Session.set('activeBrushSize', 25);
   },
+  'click .js-nebula-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'nebula', brushSize: 5 });
+    tpl.manager.setBrush(tpl.manager.brushes.nebula, { maxSize: 5 });
+    Session.set('activeBrush', 'nebula');
+    Session.set('activeBrushSize', 5);
+  },
+  'click .js-nebula-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'nebula', brushSize: 15 });
+    tpl.manager.setBrush(tpl.manager.brushes.nebula, { maxSize: 15 });
+    Session.set('activeBrush', 'nebula');
+    Session.set('activeBrushSize', 15);
+  },
+  'click .js-nebula-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'nebula', brushSize: 30 });
+    tpl.manager.setBrush(tpl.manager.brushes.nebula, { maxSize: 30 });
+    Session.set('activeBrush', 'nebula');
+    Session.set('activeBrushSize', 30);
+  },
   'click .js-ballpoint-1'(e, tpl) {
     const sel = tpl.manager.selectionLayer;
     if (sel?.hasSelection()) sel.applyStyle({ brush: 'paper', brushSize: 1 });
@@ -343,6 +364,18 @@ Template.book.events({
     else if (classList.includes('js-calligraphy-3')) brushSize = 25;
 
     sel.previewStyle({ brush: 'calligraphy', brushSize });
+  },
+  'mouseenter .js-nebula-1, mouseenter .js-nebula-2, mouseenter .js-nebula-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-nebula-1')) brushSize = 5;
+    else if (classList.includes('js-nebula-2')) brushSize = 15;
+    else if (classList.includes('js-nebula-3')) brushSize = 30;
+
+    sel.previewStyle({ brush: 'nebula', brushSize });
   },
   'mouseenter .js-color'(e, tpl) {
     const sel = tpl.manager.selectionLayer;
