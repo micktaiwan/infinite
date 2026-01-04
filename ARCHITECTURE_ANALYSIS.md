@@ -1,16 +1,8 @@
 # Analyse Architecturale - Infinite Canvas
 
-Revue fonctionnelle du code - Janvier 2025
+Revue fonctionnelle du code - Janvier 2026
 
-## Question: "L'aurais-je fait comme ca ?"
-
-### Reponse courte: **Non, pas exactement.**
-
-L'architecture actuelle est fonctionnelle et bien pensee pour un prototype, mais presente des choix qui limitent la scalabilite et la performance.
-
----
-
-## 1. Modele de Donnees Actuel
+## Modele de Donnees
 
 ### Structure MongoDB
 
@@ -18,7 +10,10 @@ L'architecture actuelle est fonctionnelle et bien pensee pour un prototype, mais
 Books (1) <---> (N) Layers <---> (N) Drawings
 ```
 
-**Drawings Collection (nommee 'lines'):**
+### Format de document actuel
+
+Le format unifie separe les donnees brutes capturees (points) du style de rendu:
+
 ```javascript
 {
   _id: ObjectId,
@@ -26,187 +21,131 @@ Books (1) <---> (N) Layers <---> (N) Drawings
   layerIndex: 0,
   order: 42,           // Sequence pour undo
   userId: "...",
-  type: "lines",       // ou "paper", "shaky"
-  color: "#000",
-  pressure: 2,
-  scale: 1,
-  lines: [             // Geometrie - VARIE selon le type
-    { x0, y0, x1, y1, scale, pressure, color },  // lines/shaky
-    // OU
-    { point: {x,y}, in: {x,y}, out: {x,y} }      // paper (bezier)
-  ]
+
+  // Points bruts captures (meme format pour tous les brushes)
+  points: [
+    { x, y, p, t },    // position, pressure normalisee (0-1), timestamp relatif (ms)
+    ...
+  ],
+
+  // Style de rendu (stocke une seule fois)
+  style: {
+    brush: "lines",    // ou "paper", "shaky"
+    color: "#000",
+    size: 2,           // taille de base
+    scale: 1           // scale au moment du dessin
+  },
+
+  // Bounding box pre-calculee (pour viewport culling)
+  bounds: { minX, minY, maxX, maxY }
 }
 ```
 
-### Ce qui fonctionne bien
-- **Document-oriented** - correspond au modele MongoDB
-- **Champ `order`** - permet l'undo par sequence
-- **`positions[userId]`** - etat de vue par utilisateur (zoom, pan)
-- **Type extensible** - facile d'ajouter des brushes
+### Points cles de cette architecture
 
-### Problemes architecturaux
+1. **Separation donnees/style** - Les points bruts sont independants du rendu
+   - Permet de changer le brush/couleur apres coup
+   - Pas de duplication (style stocke une seule fois)
 
-1. **Duplication massive de donnees**
-   - `scale`, `pressure`, `color` repetes sur CHAQUE segment
-   - 1000 segments = 1000 copies de la meme valeur scale
+2. **Format unifie** - Tous les brushes utilisent le meme format de points
+   - Le type de brush dans `style.brush` determine le rendu
+   - Simplification Paper.js appliquee a la lecture (pas au stockage)
 
-2. **Format de ligne incoherent**
-   - `lines` brush: `{x0, y0, x1, y1}`
-   - `paper` brush: `{point, in, out}`
-   - Le code doit router vers differentes methodes
+3. **Bounds pre-calcules** - Pour le viewport culling futur
+   - Calcules a la sauvegarde via `computeBounds()`
 
-3. **Pas de chunking intelligent**
-   - Un trait long = un gros document
-   - MongoDB limite a 16MB par document
+4. **Pressure normalisee** - `p` stockee entre 0-1
+   - Multipliee par `style.size * ratio` au rendu
+
+### Pipeline de rendu
+
+```
+Stockage (points bruts)  -->  Lecture  -->  Rendu specifique au brush
+     {x, y, p, t}                          - lines: segments droits
+                                           - paper: simplify() + bezier
+                                           - shaky: segments droits
+```
+
+Le brush `paper` utilise Paper.js pour simplifier les points en courbes bezier **a chaque rendu**, permettant d'adapter la tolerance au niveau de zoom.
 
 ---
 
-## 2. Modele Optimise Propose
+## Optimisations futures possibles
 
-### Option A: Separation Header/Geometry
+### Rendu: Double Buffering + Cache
 
-```javascript
-// Collection: Strokes (header)
-{
-  _id: ObjectId,
-  bookId: "...",
-  layerIndex: 0,
-  order: 42,
-  userId: "...",
-  type: "path",        // Type unifie
-  color: "#000",
-  pressure: 2,
-  scale: 1,
-  bounds: { minX, minY, maxX, maxY },  // Pour culling
-  pointCount: 150
-}
-
-// Collection: StrokeGeometry (donnees)
-{
-  strokeId: ObjectId,  // Reference
-  points: Float32Array // Binaire compact
-}
-```
-
-**Avantages:**
-- Headers legers pour les requetes
-- Geometrie chargee a la demande
-- Bounds pour le viewport culling
-
-### Option B: Format unifie avec compression
-
-```javascript
-{
-  _id: ObjectId,
-  bookId: "...",
-  type: "stroke",
-  // Metadonnees une seule fois
-  color: "#000",
-  baseWidth: 2,
-
-  // Points en format compact
-  // [x, y, pressure] repete, delta-encoded
-  points: "base64_encoded_binary",
-
-  // Ou format simplifie pour lignes droites
-  segments: [[x0,y0,x1,y1], ...]
-}
-```
-
----
-
-## 3. Architecture de Rendu Actuelle
-
-### Flow actuel
-```
-redraw()
-  -> requestAnimationFrame()
-  -> ctx.clearRect(0, 0, width, height)  // CLEAR TOUT
-  -> Drawings.find({bookId, layerIndex}).forEach(drawing =>
-      manager.delegate('drawing', drawing, layer)  // Redessine TOUT
-    )
-```
-
-### Probleme majeur: **Full Redraw**
-- Chaque `redraw()` efface et redessine TOUS les traits
-- Avec 500 traits de 100 segments = 50,000 operations canvas
-- Pas de dirty rectangles, pas de cache
-
-### Alternative: Double Buffering + Cache
+Actuellement, chaque `redraw()` efface et redessine tous les traits. Pour des dessins complexes:
 
 ```javascript
 class OptimizedLayer {
   constructor() {
     this.displayCanvas = document.createElement('canvas');
-    this.cacheCanvas = document.createElement('canvas');   // Cache static
+    this.cacheCanvas = document.createElement('canvas');
     this.dirtyRegion = null;
   }
 
-  // Seul le nouveau trait est dessine
   addStroke(stroke) {
     const cacheCtx = this.cacheCanvas.getContext('2d');
     this.renderStroke(stroke, cacheCtx);
     this.compositeToDisplay();
   }
 
-  // Full redraw seulement si pan/zoom
   onViewportChange() {
     this.rebuildCache();
   }
-
-  // Composition rapide
-  compositeToDisplay() {
-    const ctx = this.displayCanvas.getContext('2d');
-    ctx.drawImage(this.cacheCanvas, 0, 0);
-  }
 }
 ```
 
+### Viewport Culling (implemente)
+
+Filtrage cote client des drawings hors ecran dans `boardLayer.draw()`:
+
+```javascript
+const b = drawing.bounds;
+if (b && (b.maxX < vMinX || b.minX > vMaxX || b.maxY < vMinY || b.minY > vMaxY)) return;
+```
+
+Gain: ~17ms sur 430 objets quand la majorite est hors ecran.
+
 ---
 
-## 4. Probleme Paper.js
+## Paper.js
 
 ### Utilisation actuelle
+
+Paper.js est utilise uniquement pour la simplification des courbes dans le brush `paper`:
+
 ```javascript
-// paper.js brush
-constructor() {
-  paper.setup();  // Initialise Paper.js
-}
+// Au rendu (pas a la sauvegarde)
+drawing(drawing, layer) {
+  const path = new paper.Path({
+    segments: points.map(p => new paper.Point(p.x, p.y)),
+  });
 
-draw(layer) {
-  this.path.add(new paper.Point(x, y));
-  // MAIS: utilise canvas directement pour afficher!
-  layer.drawLine(prevX, prevY, x, y, ...);
-}
+  const tolerance = Math.max(0.1, 2.5 / layer.scale);
+  this.simplifyPath(path, tolerance);
 
-saveDrawings() {
-  this.path.simplify();  // Seule utilite reelle de Paper.js
-  // Convertit en JSON et sauvegarde
+  // Rendu bezier avec les handles generes
+  c.bezierCurveTo(prev.handleOut, curr.handleIn, curr.point);
 }
 ```
 
-### Le probleme
-- Paper.js est inclus (250KB) juste pour `path.simplify()`
-- Le rendu n'utilise PAS Paper.js
-- Overhead de memoire pour chaque PaperBrush
+### Avantages de simplifier au rendu
+- Points bruts preserves en base (reversible)
+- Tolerance adaptee au zoom (plus de details quand on zoome)
+- Meme format de stockage que les autres brushes
 
-### Alternative: Algorithme de simplification standalone
+### Alternative future: simplify-js
 ```javascript
-import simplify from 'simplify-js';  // 2KB
-
-// Ou implementer Ramer-Douglas-Peucker
-function simplifyPath(points, tolerance) {
-  // ~50 lignes de code
-}
+import simplify from 'simplify-js';  // 2KB vs 250KB pour Paper.js
 ```
 
 ---
 
-## 5. Collaboration Temps Reel
+## Collaboration Temps Reel
 
-### Actuel: Naive Broadcast
+### Actuel: Meteor DDP
 ```javascript
-// Chaque modification -> redraw complet chez tous
 observeChanges({
   added: () => self.redraw(),
   changed: () => self.redraw(),
@@ -214,59 +153,25 @@ observeChanges({
 });
 ```
 
-### Probleme
-- Pas d'Operational Transform
-- Pas de CRDT
-- Conflits possibles sur undo concurrent
-
-### Solution ideale: CRDT ou OT
-
+### Amelioration future: CRDT
 ```javascript
-// Avec Yjs (CRDT)
 import * as Y from 'yjs';
-
-const ydoc = new Y.Doc();
 const strokes = ydoc.getArray('strokes');
-
-strokes.observe(event => {
-  event.changes.delta.forEach(change => {
-    if (change.insert) renderNewStroke(change.insert);
-    if (change.delete) removeStroke(change.delete);
-  });
-});
 ```
 
 ---
 
-## 6. Resume: Ce que je changerais
+## Resume
 
-| Aspect | Actuel | Recommande |
-|--------|--------|------------|
-| **Stockage lignes** | Array de segments avec duplication | Header separe + geometry binaire |
-| **Format brush** | 3 formats differents | Format unifie "stroke" |
-| **Rendu** | Full redraw a chaque frame | Cache canvas + dirty rectangles |
-| **Paper.js** | 250KB pour simplify() | Algorithme standalone (2KB) |
-| **Collab** | Naive observeChanges | CRDT (Yjs) ou OT |
-| **Undo** | Par ordre global | Par utilisateur + merge |
-| **Performance** | O(n) tous les segments | Viewport culling + LOD |
-
----
-
-## 7. Est-ce que l'architecture actuelle est "mauvaise" ?
-
-**Non.** Elle est adaptee pour:
-- Prototype / MVP
-- Usage single-user
-- < 1000 segments par layer
-- Developpement rapide avec Meteor
-
-Elle devient problematique pour:
-- Collaboration intensive multi-utilisateurs
-- Dessins complexes (> 10,000 segments)
-- Mobile / low-end devices
-- Offline-first
-
-L'architecture reflete des choix pragmatiques de MVP. Les optimisations ci-dessus seraient du "premature optimization" sans metriques reelles de performance.
+| Aspect | Implementation |
+|--------|----------------|
+| **Stockage** | Points bruts + style separe (pas de duplication) |
+| **Format brush** | Format unifie pour tous les brushes |
+| **Bounds** | Pre-calcules a la sauvegarde |
+| **Viewport culling** | Filtrage cote client (gain ~17ms sur 430 objets) |
+| **Paper.js** | Simplification au rendu (tolerance adaptative) |
+| **Rendu** | Full redraw (cache canvas a implementer) |
+| **Collab** | Meteor DDP (CRDT a considerer) |
 
 ---
 
