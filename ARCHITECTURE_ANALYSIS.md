@@ -1,6 +1,6 @@
 # Analyse Architecturale - Infinite Canvas
 
-*Revue fonctionnelle du code - Janvier 2025*
+Revue fonctionnelle du code - Janvier 2025
 
 ## Question: "L'aurais-je fait comme ca ?"
 
@@ -13,7 +13,8 @@ L'architecture actuelle est fonctionnelle et bien pensee pour un prototype, mais
 ## 1. Modele de Donnees Actuel
 
 ### Structure MongoDB
-```
+
+```text
 Books (1) <---> (N) Layers <---> (N) Drawings
 ```
 
