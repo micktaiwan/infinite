@@ -67,6 +67,8 @@ export default class PaperBrush extends Brush {
     c.strokeStyle = style.color;
     c.stroke();
     c.closePath();
+
+    path.remove();
   }
 
   simplifyPath(path, tolerance) {
