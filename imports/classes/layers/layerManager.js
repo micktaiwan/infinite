@@ -3,6 +3,7 @@
 import LinesBrush from '../brushes/lines';
 import ShakyBrush from '../brushes/shaky';
 import PaperBrush from '../brushes/paper';
+import CalligraphyBrush from '../brushes/calligraphy';
 import SelectionLayer from './selectionLayer';
 import BoardLayer from './boardLayer';
 import { Layers } from '../../api/books/collections';
@@ -29,6 +30,7 @@ export default class LayerManager {
       lines: new LinesBrush(),
       shaky: new ShakyBrush(),
       paper: new PaperBrush(),
+      calligraphy: new CalligraphyBrush(),
     };
     this.brush = this.brushes.lines;
     this.color = '#000000';
@@ -137,6 +139,8 @@ export default class LayerManager {
         return this.brushes.shaky;
       case 'paper':
         return this.brushes.paper;
+      case 'calligraphy':
+        return this.brushes.calligraphy;
       default:
         console.error(`Unknown brush type: ${type}`);
         return undefined;
@@ -191,7 +195,11 @@ export default class LayerManager {
   }
 
   focusCurrentLayerCanvas() {
-    this.layers[this.currentLayer].focusCanvas();
+    if (this.selectionLayer.hasSelection()) {
+      this.selectionLayer.focusCanvas();
+    } else {
+      this.layers[this.currentLayer].focusCanvas();
+    }
   }
 
   dimOpacityForAllLayers() {

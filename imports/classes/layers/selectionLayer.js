@@ -5,6 +5,7 @@ export default class SelectionLayer extends Layer {
   constructor(manager) {
     super(manager, manager.bookId);
     this.canvas.id = 'selectionLayer';
+    this.originalStyles = null;
 
     // Store bound handlers for cleanup
     this._boundHandlers = {
@@ -188,10 +189,8 @@ export default class SelectionLayer extends Layer {
   drawSelectedDrawings() {
     if (!this.selectionOriginLayer) return;
     this.drawings.forEach(drawing => {
-      const originalColor = drawing.color;
-      drawing.color = '#f90';
+      drawing.color = drawing.style.color;
       this.manager.delegate('drawing', drawing, this);
-      drawing.color = originalColor;
     });
   }
 
@@ -291,5 +290,54 @@ export default class SelectionLayer extends Layer {
     this.sel.fillText(Drawings.find().count(), 90, 25);
     // this.sel.fillText('Size', 10, 40);
     // this.sel.fillText(`${Math.round(JSON.stringify(this.drawings).length / 1024)} KB`, 90, 40);
+  }
+
+  hasSelection() {
+    return this.selection && this.drawings.length > 0;
+  }
+
+  previewStyle({ brush, brushSize, color }) {
+    if (!this.hasSelection()) return;
+
+    // Sauvegarder les styles originaux si pas encore fait
+    if (!this.originalStyles) {
+      this.originalStyles = this.drawings.map(d => ({ ...d.style }));
+    }
+
+    // Appliquer le nouveau style temporairement
+    this.drawings.forEach(drawing => {
+      if (brush !== undefined) drawing.style.brush = brush;
+      if (brushSize !== undefined) drawing.style.size = brushSize;
+      if (color !== undefined) drawing.style.color = color;
+    });
+
+    this.redraw();
+  }
+
+  revertPreview() {
+    if (!this.originalStyles) return;
+
+    // Restaurer les styles originaux
+    this.drawings.forEach((drawing, i) => {
+      drawing.style = { ...this.originalStyles[i] };
+    });
+
+    this.originalStyles = null;
+    this.redraw();
+  }
+
+  applyStyle({ brush, brushSize, color }) {
+    if (!this.hasSelection()) return;
+
+    // Appliquer le style
+    this.drawings.forEach(drawing => {
+      if (brush !== undefined) drawing.style.brush = brush;
+      if (brushSize !== undefined) drawing.style.size = brushSize;
+      if (color !== undefined) drawing.style.color = color;
+    });
+
+    // Effacer originalStyles pour indiquer que c'est validé
+    this.originalStyles = null;
+    this.redraw();
   }
 }

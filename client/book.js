@@ -93,7 +93,7 @@ Template.book.helpers({
   activeBrushLabel() {
     const type = Session.get('activeBrush');
     const size = Session.get('activeBrushSize');
-    const labels = { lines: 'Brush', paper: 'Pen', shaky: 'Shaky' };
+    const labels = { lines: 'Brush', paper: 'Pen', shaky: 'Shaky', calligraphy: 'Calligraphy' };
     return `${labels[type] || 'Brush'} ${size}`;
   },
   activeBrushClass(brushType, size) {
@@ -177,46 +177,85 @@ Template.book.events({
 
   // Brush events with state updates
   'click .js-brush-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'lines', brushSize: 2 });
     tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 2 });
     Session.set('activeBrush', 'lines');
     Session.set('activeBrushSize', 2);
   },
   'click .js-brush-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'lines', brushSize: 3 });
     tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 3 });
     Session.set('activeBrush', 'lines');
     Session.set('activeBrushSize', 3);
   },
   'click .js-brush-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'lines', brushSize: 15 });
     tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 15 });
     Session.set('activeBrush', 'lines');
     Session.set('activeBrushSize', 15);
   },
   'click .js-brush-4'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'lines', brushSize: 100 });
     tpl.manager.setBrush(tpl.manager.brushes.lines, { maxSize: 100 });
     Session.set('activeBrush', 'lines');
     Session.set('activeBrushSize', 100);
   },
   'click .js-shaky-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'shaky', brushSize: 3 });
     tpl.manager.setBrush(tpl.manager.brushes.shaky, { maxSize: 3 });
     Session.set('activeBrush', 'shaky');
     Session.set('activeBrushSize', 3);
   },
   'click .js-shaky-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'shaky', brushSize: 10 });
     tpl.manager.setBrush(tpl.manager.brushes.shaky, { maxSize: 10 });
     Session.set('activeBrush', 'shaky');
     Session.set('activeBrushSize', 10);
   },
+  'click .js-calligraphy-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'calligraphy', brushSize: 3 });
+    tpl.manager.setBrush(tpl.manager.brushes.calligraphy, { maxSize: 3 });
+    Session.set('activeBrush', 'calligraphy');
+    Session.set('activeBrushSize', 3);
+  },
+  'click .js-calligraphy-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'calligraphy', brushSize: 10 });
+    tpl.manager.setBrush(tpl.manager.brushes.calligraphy, { maxSize: 10 });
+    Session.set('activeBrush', 'calligraphy');
+    Session.set('activeBrushSize', 10);
+  },
+  'click .js-calligraphy-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'calligraphy', brushSize: 25 });
+    tpl.manager.setBrush(tpl.manager.brushes.calligraphy, { maxSize: 25 });
+    Session.set('activeBrush', 'calligraphy');
+    Session.set('activeBrushSize', 25);
+  },
   'click .js-ballpoint-1'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'paper', brushSize: 1 });
     tpl.manager.setBrush(tpl.manager.brushes.paper, { maxSize: 1 });
     Session.set('activeBrush', 'paper');
     Session.set('activeBrushSize', 1);
   },
   'click .js-ballpoint-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'paper', brushSize: 3 });
     tpl.manager.setBrush(tpl.manager.brushes.paper, { maxSize: 3 });
     Session.set('activeBrush', 'paper');
     Session.set('activeBrushSize', 3);
   },
   'click .js-ballpoint-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) sel.applyStyle({ brush: 'paper', brushSize: 10 });
     tpl.manager.setBrush(tpl.manager.brushes.paper, { maxSize: 10 });
     Session.set('activeBrush', 'paper');
     Session.set('activeBrushSize', 10);
@@ -239,13 +278,84 @@ Template.book.events({
   // Color events
   'click .js-color'(e, tpl) {
     const { color } = e.currentTarget.dataset;
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) {
+      sel.applyStyle({ color });
+    }
     Session.set('activeColor', color);
     tpl.manager.setColor(color);
   },
   'input .js-color-picker'(e, tpl) {
     const color = e.currentTarget.value;
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) {
+      sel.previewStyle({ color });
+    }
     Session.set('activeColor', color);
     tpl.manager.setColor(color);
+  },
+
+  // Selection style preview on hover
+  'mouseenter .js-brush-1, mouseenter .js-brush-2, mouseenter .js-brush-3, mouseenter .js-brush-4'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-brush-1')) brushSize = 2;
+    else if (classList.includes('js-brush-2')) brushSize = 3;
+    else if (classList.includes('js-brush-3')) brushSize = 15;
+    else if (classList.includes('js-brush-4')) brushSize = 100;
+
+    sel.previewStyle({ brush: 'lines', brushSize });
+  },
+  'mouseenter .js-ballpoint-1, mouseenter .js-ballpoint-2, mouseenter .js-ballpoint-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-ballpoint-1')) brushSize = 1;
+    else if (classList.includes('js-ballpoint-2')) brushSize = 3;
+    else if (classList.includes('js-ballpoint-3')) brushSize = 10;
+
+    sel.previewStyle({ brush: 'paper', brushSize });
+  },
+  'mouseenter .js-shaky-1, mouseenter .js-shaky-2'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-shaky-1')) brushSize = 3;
+    else if (classList.includes('js-shaky-2')) brushSize = 10;
+
+    sel.previewStyle({ brush: 'shaky', brushSize });
+  },
+  'mouseenter .js-calligraphy-1, mouseenter .js-calligraphy-2, mouseenter .js-calligraphy-3'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const classList = e.currentTarget.className;
+    let brushSize;
+    if (classList.includes('js-calligraphy-1')) brushSize = 3;
+    else if (classList.includes('js-calligraphy-2')) brushSize = 10;
+    else if (classList.includes('js-calligraphy-3')) brushSize = 25;
+
+    sel.previewStyle({ brush: 'calligraphy', brushSize });
+  },
+  'mouseenter .js-color'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (!sel?.hasSelection()) return;
+
+    const { color } = e.currentTarget.dataset;
+    sel.previewStyle({ color });
+  },
+  'mouseleave .submenu'(e, tpl) {
+    const sel = tpl.manager.selectionLayer;
+    if (sel?.hasSelection()) {
+      sel.revertPreview();
+    }
   },
 
   'click .js-toggle-culling'(e, tpl) {
