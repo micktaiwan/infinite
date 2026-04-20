@@ -3,3 +3,4 @@ node_modules/
 .prod/
 .git/
 service/
+.claude/settings.local.json
